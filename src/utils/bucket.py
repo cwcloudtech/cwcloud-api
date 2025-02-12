@@ -99,8 +99,8 @@ def upload_bucket(path_file, target_name, url, bucket_name):
            return {
                 'status': 'ko',
                 'error': 'File not exists',
-                'i18n_code': 'file_not_exists',
-                'http_code': 500,
+                'i18n_code': 'file_not_found',
+                'http_code': 404,
                 'cid': get_current_cid()
             }
 
