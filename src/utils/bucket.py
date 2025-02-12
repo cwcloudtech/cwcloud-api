@@ -92,6 +92,22 @@ def upload_bucket(path_file, target_name, url, bucket_name):
             'cid': get_current_cid()
         }
 
+    if not os.path.exists(path_file):
+        basename = os.path.basename(path_file)
+        if not os.path.exists(basename):
+           log_msg("ERROR", "[upload_bucket] file not exists: path_file = {}, basename = {}, target_name = {}".format(path_file, basename, target_name))
+           return {
+                'status': 'ko',
+                'error': 'File not exists',
+                'i18n_code': 'file_not_exists',
+                'http_code': 500,
+                'cid': get_current_cid()
+            }
+
+        log_msg("DEBUG", "[upload_bucket] file not exists, switching path_file = {} with basename = {}".format(path_file, basename))
+        target_name = path_file
+        path_file = basename
+
     client = Minio(url, region = bucket_region, access_key = access_key, secret_key = secret_key)
     found = client.bucket_exists(bucket_name)
     log_msg("DEBUG", "[upload_bucket] found = {}".format(found))
