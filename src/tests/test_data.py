@@ -21,8 +21,8 @@ class TestData(TestCase):
         from entities.iot.Device import Device
 
         device = Device()
-        device.id = 1
-        device.typeobject_id = 1
+        device.id = "qsd6f5qsdf656d4q4242455"
+        device.typeobject_id = "qd6dq5sf6qsd5f68dqs5"
         device.username = 'admin'
         device.active = True
 
@@ -36,8 +36,7 @@ class TestData(TestCase):
         
         invoke_sync.return_value = {'status': 'ok', 'message': 'Success', 'entity': {'content': {'result': '123'}}}
 
-        # Correctly instantiate DataSchema with required fields
-        payload = DataSchema(device_id=device.id, content=1)
+        payload = DataSchema(device_id=device.id, content="content")
 
         mock_user_auth = Mock()
         mock_user_auth.is_admin = True

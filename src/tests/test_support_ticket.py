@@ -236,7 +236,10 @@ class TestSupportTicket(TestCase):
     def test_reply_support_ticket_success(self, mock_gitlab_comment, mock_get_ticket):
         # Given
         mock_get_ticket.return_value = self.sample_ticket
-        payload = SupportTicketReplySchema(message="Test reply")
+        payload = SupportTicketReplySchema(
+            message="Test reply",
+            status="await agent"
+        )
         
         # When
         result = reply_support_ticket(self.mock_user, payload, "123", self.mock_db)
@@ -252,7 +255,10 @@ class TestSupportTicket(TestCase):
         mock_get_ticket.return_value = self.sample_ticket
         mock_get_log.return_value = self.sample_reply
 
-        payload = SupportTicketReplySchema(message="Updated reply")
+        payload = SupportTicketReplySchema(
+            message="Updated reply",
+            status="await agent"
+        )
         
         # When
         result = update_reply_support_ticket(

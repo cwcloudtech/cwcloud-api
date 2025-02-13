@@ -7,5 +7,5 @@ class BucketSchema(BaseModel):
     type: str
 
 class BucketUpdateSchema(BaseModel):
-    email: Optional[str]
-    update_creds: Optional[bool]
+    email: Optional[str] = None
+    update_creds: Optional[bool] = None

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
 class DataSchema(BaseModel):
     device_id: str
     content: str

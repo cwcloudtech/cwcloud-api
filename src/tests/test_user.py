@@ -7,6 +7,13 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 from fastapi.responses import JSONResponse
 from entities.User import User
+from controllers.user import create_user_account, get_user_cloud_statistics, get_user_cloud_resources, forget_password_email, user_reset_password, verify_user_token, confirmation_email, update_user_informations
+from schemas.User import UserRegisterSchema, UserEmailUpdateSchema, UserLoginSchema
+from entities.Instance import Instance
+from entities.Project import Project
+from entities.Bucket import Bucket
+from entities.Registry import Registry
+from entities.Access import Access
 
 class TestConstants:
     TEST_EMAIL = "test@example.com"
@@ -74,8 +81,6 @@ class TestUser(TestCase):
     @patch('entities.User.User.save')
     def test_user_signup(self, save_user, send_confirmation_email, create_gitlab_user, getUserByEmail):
         getUserByEmail.return_value = None
-        from controllers.user import create_user_account
-        from schemas.User import UserRegisterSchema
         
         # Given
         payload = UserRegisterSchema(
@@ -107,12 +112,6 @@ class TestUser(TestCase):
     @patch('entities.Registry.Registry.getAllUserRegistries')
     def test_get_user_cloud_statistics(self, getActiveUserInstances, getUserAccessesByType, getUserProjects, getAllUserBuckets, getAllUserRegistries):
         # Given
-        from controllers.user import get_user_cloud_statistics
-        from entities.Instance import Instance
-        from entities.Project import Project
-        from entities.Bucket import Bucket
-        from entities.Registry import Registry
-        from entities.Access import Access
         getActiveUserInstances.return_value = [Instance(), Instance()]
         getUserAccessesByType.return_value = [Access(), Access()]
         getUserProjects.return_value = [Project(), Project()]
@@ -135,11 +134,6 @@ class TestUser(TestCase):
     @patch('entities.Registry.Registry.getAllUserRegistries', side_effect = lambda x,y:[])
     def test_get_user_cloud_resources(self, getAllUserRegistries, getAllUserBuckets, getActiveUserInstances, getUserProjects):
         # Given
-        from controllers.user import get_user_cloud_resources
-        from entities.Instance import Instance
-        from entities.Project import Project
-        from entities.Bucket import Bucket
-        from entities.Registry import Registry
         instances = Instance()
         projects = Project()
         buckets = Bucket()
@@ -170,9 +164,6 @@ class TestUser(TestCase):
     @patch('entities.User.User.getUserByEmail')
     def test_forget_password_email(self, getUserByEmail, send_forget_password_email, encode, save):
         # Given
-        from controllers.user import forget_password_email
-        from schemas.User import UserEmailUpdateSchema
-        from entities.User import User
         encode.return_value = {"email": "test@example.com"}
         payload = UserEmailUpdateSchema(
             email = "example@example.com"
@@ -193,10 +184,6 @@ class TestUser(TestCase):
     @patch('controllers.user.User.updateUserPassword', side_effect = lambda x,y,z:[])    
     def test_user_reset_password(self, getUserByEmail, updateUserPassword): 
         # Given
-        from controllers.user import user_reset_password
-        from schemas.User import UserLoginSchema
-        from entities.User import User
-        
         payload = UserLoginSchema(
             email = self.constants.TEST_EMAIL,
             password = self.constants.TEST_PASSWORD  # Using the secure password that meets requirements
@@ -224,8 +211,6 @@ class TestUser(TestCase):
     @patch('entities.User.User.getUserByEmail')
     def test_verify_user_token(self, getUserByEmail, save, send_confirmation_email, decode):
         # Given
-        from controllers.user import verify_user_token
-        from entities.User import User
 
         token = self.constants.TEST_TOKEN
         decode.return_value = {"email": self.constants.TEST_EMAIL}
@@ -272,9 +257,6 @@ class TestUser(TestCase):
     @patch('entities.User.User.getUserByEmail')
     def test_confirmation_email(self, getUserByEmail, encode, send_confirmation_email, save):
         # Given
-        from controllers.user import confirmation_email
-        from schemas.User import UserEmailUpdateSchema
-        from entities.User import User
         encode.return_value = {"email": "test@example.com"}
         payload = UserEmailUpdateSchema(
             email = "example@example.com"
@@ -299,10 +281,6 @@ class TestUser(TestCase):
     @patch('entities.User.User.getUserById', side_effect = lambda x,y: User(id=1))  
     def test_update_user_informations(self, getUserById, updateUser):
         # Given
-        from controllers.user import update_user_informations
-        from schemas.User import UserRegisterSchema
-        from entities.User import User
-
         user = User()
         user.id = 1
         user.email = self.constants.TEST_EMAIL

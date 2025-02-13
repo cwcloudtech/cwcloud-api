@@ -173,11 +173,14 @@ class TestAdminInstance(TestCase):
 
         payload = InstanceProvisionSchema(
             name = "test",
-            type = "DEV1-S",
-            root_dns_zone = "comwork.cloud",
-            debug = True,
             email = "test@gmail.com",
             project_id = "1",
+            project_name = "test_project",
+            project_url = "https://gitlab.comwork.io/dynamic/test_project",
+            debug = "true",
+            type = "DEV1-S",
+            root_dns_zone = "comwork.cloud",
+            args = {}
         )
 
         # When

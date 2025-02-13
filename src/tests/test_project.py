@@ -66,6 +66,11 @@ class TestProject(TestCase):
         payload = ProjectSchema(
             name = project_name,
             type = "vm",
+            host = "https://gitlab.comwork.io",
+            token = self.test_token,
+            git_username = "amirghedira",
+            git_useremail = "username@email.com",
+            namespace = "dynamic"
         )
 
         # When

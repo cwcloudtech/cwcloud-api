@@ -22,4 +22,4 @@ class DeploymentSchema(BaseModel):
     env_id: int
     cluster_id: int
     project_id: int
-    args: Optional[Dict[str, Any]]
+    args: Optional[Dict[str, Any]] = None

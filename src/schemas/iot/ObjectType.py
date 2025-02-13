@@ -12,4 +12,4 @@ class ObjectTypeSchema(BaseModel):
 
 class AdminObjectTypeSchema(BaseModel):
     content : ObjectTypeContent
-    user_id: Optional[int]
+    user_id: Optional[int] = None

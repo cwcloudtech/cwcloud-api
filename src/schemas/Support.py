@@ -15,5 +15,5 @@ class AdminSupportTicketSchema(BaseModel):
     message: str
 
 class SupportTicketReplySchema(BaseModel):
-    status: Optional[str]
+    status: Optional[str] = None
     message: str

@@ -24,7 +24,6 @@ class TestDevice(TestCase):
     })
     def test_add_device(self, add_device, getUserByEmail):
         # Given
-        from controllers.iot.device import add_device
         from schemas.iot.Device import DeviceSchema
         from entities.User import User
 
@@ -40,7 +39,7 @@ class TestDevice(TestCase):
         }
 
         payload = DeviceSchema.parse_obj({
-            'typeobject_id': 1,
+            'typeobject_id': '1',
             'username': 'test@comwork.io'
         })
 
@@ -53,7 +52,7 @@ class TestDevice(TestCase):
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['message'], 'Device successfully created')
         self.assertIsNotNone(result['token'])
-        self.assertNotEqual(result['token'], 'some_token')  #? Ensure we're not using a hardcoded token
+        self.assertNotEqual(result['token'], 'some_token')  # Ensure we're not using a hardcoded token
     
     @patch('jose.jwt.decode')
     @patch('entities.User.User.getUserByEmail')

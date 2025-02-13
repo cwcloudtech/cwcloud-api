@@ -70,19 +70,20 @@ class UserEmailUpdateSchema(BaseModel):
 class UserAdminUpdateSchema(BaseModel):
     email: str
     is_admin: Optional[bool] = False
-    registration_number: Optional[str]
-    address: Optional[str]
-    company_name: Optional[str]
-    contact_info: Optional[str]
+    registration_number: Optional[str] = None
+    address: Optional[str] = None
+    company_name: Optional[str] = None
+    contact_info: Optional[str] = None
     confirmed: Optional[bool] = True
-    enabled_features: Optional[EnabledFeatures]
+    enabled_features: Optional[EnabledFeatures] = None
 
 class UserAdminAddSchema(BaseModel):
     email: str
     password: str
     is_admin: bool = False
-    registration_number: Optional[str]
-    address: Optional[str]
-    company_name: Optional[str]
-    contact_info: Optional[str]
-    enabled_features: Optional[EnabledFeatures]
+    registration_number: Optional[str] = None
+    address: Optional[str] = None
+    company_name: Optional[str] = None
+    contact_info: Optional[str] = None
+    st_customer_id: Optional[str] = None
+    enabled_features: Optional[EnabledFeatures] = None

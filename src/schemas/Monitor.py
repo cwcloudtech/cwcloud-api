@@ -16,24 +16,24 @@ class Header(BaseModel):
     value: str
     
 class MQTTCertificates(BaseModel):
-    iot_hub_certificate: Optional[str]
-    device_certificate: Optional[str]
-    device_key_certificate: Optional[str]
+    iot_hub_certificate: Optional[str] = None
+    device_certificate: Optional[str] = None
+    device_key_certificate: Optional[str] = None
 
 class CallbackContent(BaseModel):
     type: str = Field(examples=["http", "websocket", "mqtt"])
     endpoint: str
-    token: Optional[str]
-    client_id: Optional[str]
-    user_data: Optional[str]
-    username: Optional[str]
-    password: Optional[str]
-    port: Optional[str]
-    subscription: Optional[str]
-    qos: Optional[str]
-    topic: Optional[str]
+    token: Optional[str] = None
+    client_id: Optional[str] = None
+    user_data: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    port: Optional[str] = None
+    subscription: Optional[str] = None
+    qos: Optional[str] = None
+    topic: Optional[str] = None
     certificates_are_required: bool = Field(default=False)
-    certificates: Optional[MQTTCertificates]
+    certificates: Optional[MQTTCertificates] = None
 
 class BaseMonitorSchema(BaseModel):
     type: MonitorType = Field(..., description="Type of monitor (http or tcp)")

@@ -22,8 +22,10 @@ class TestFunction(TestCase):
             language = 'javascript',
             name = 'foo',
             args = ['arg'],
-            callback_url = 'https://example.com',
-            callback_authorization_header = 'Basic YWRtaW46YWRtaW4='
+            blockly = None,
+            callbacks = None,
+            regexp = None,
+            env = None
         )
         
         function = BaseFunction(
@@ -58,16 +60,20 @@ class TestFunction(TestCase):
             language = 'javascript',
             name = 'foo',
             args = ['arg'],
-            callback_url = 'https://example.com',
-            callback_authorization_header = 'Basic YWRtaW46YWRtaW4='
+            blockly = None,
+            callbacks = None,
+            regexp = None,
+            env = None
         )
         
         function = Function(
-            id = 1,
-            owner_username = 1,
+            id = '1',
+            owner_username = '1',
             created_at = '2020-01-01',
             updated_at = '2020-01-01',
-            content =  function_content
+            is_public = True,
+            owner_id = 1,
+            content = function_content
         )
         
         override_owner_id.return_value = function

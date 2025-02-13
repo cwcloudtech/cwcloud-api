@@ -1,7 +1,9 @@
-ARG PYTHON_VERSION=3.9.16
+ARG PYTHON_VERSION=3.13.1-alpine
 ARG FLYWAYDB_VERSION=9.20-alpine
+ARG WKHTMLTOPDF_VERSION=3.21.2-0.12.6-full
 
 # Base image
+FROM surnet/alpine-wkhtmltopdf:${WKHTMLTOPDF_VERSION} as wkhtmltopdf
 FROM python:${PYTHON_VERSION} as api
 
 # Set environment variables
@@ -14,23 +16,22 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends wkhtmltopdf git && \
-    curl -fsSL https://get.pulumi.com | sh && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+COPY --from=wkhtmltopdf /bin/wkhtmltopdf /bin/wkhtmltopdf
+COPY --from=wkhtmltopdf /bin/wkhtmltoimage /bin/wkhtmltoimage
+COPY --from=wkhtmltopdf /lib/libwkhtmltox* /lib/
 
-# Install Python dependencies
+RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
+    apk add --no-cache git curl libpq-dev musl-dev linux-headers && \
+    curl -fsSL https://get.pulumi.com | sh
+
 COPY ./requirements.txt /app/requirements.txt
 
 RUN find . -name '*.pyc' -type f -delete && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
-    rm -rf *.tgz && \
-    apt clean -y
+    apk del .build-deps && \
+    rm -rf *.tgz
 
-# API image
 COPY . /app/
 
 EXPOSE 5000
@@ -46,16 +47,7 @@ CMD ["python", "src/scheduler.py"]
 FROM api as consumer
 
 RUN mkdir -p /functions && \
-    apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates curl golang-go jq gnupg && \
-    mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" >> /etc/apt/sources.list.d/nodesource.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apk add --no-cache bash nodejs go jq
 
 CMD ["python", "src/consumer.py"]
 
@@ -73,7 +65,7 @@ WORKDIR /app/src
 
 CMD ["ruff", "check", "--fix", "."]
 
-# Scan
+# Scan image
 FROM api AS code_scanner
 
 WORKDIR /app/src

@@ -21,18 +21,26 @@ class TestInvocations(TestCase):
         from schemas.faas.Invocation import Invocation
         from schemas.faas.Invocation import InvocationContent
         from schemas.faas.InvocationArg import InvocationArgument
+        from schemas.UserAuthentication import UserAuthentication
         
         invocation_arg = InvocationArgument(
             key = 'key',
             value = 'value'
         )
         
+        user_auth = UserAuthentication(
+            is_authenticated=True,
+            header_key="Authorization",
+            header_value="Bearer token"
+        )
+        
         invocation_content = InvocationContent(
-            function_id = 1,
+            function_id = "1",
             args = [invocation_arg],
             state = '',
             result = '',
-            user_id = 1
+            user_id = "1",
+            user_auth = user_auth
         )
         
         invocation = Invocation(
@@ -56,29 +64,38 @@ class TestInvocations(TestCase):
     def test_complete(self, is_empty, override_invoker_id, complete):
         # Given
         from controllers.faas.invocations import complete
-        from  schemas.faas.Invocation import CompletedInvocation
+        from schemas.faas.Invocation import CompletedInvocation
         from schemas.faas.Invocation import InvocationContent
         from schemas.faas.InvocationArg import InvocationArgument
+        from schemas.UserAuthentication import UserAuthentication
         
         invocation_arg = InvocationArgument(
             key = 'key',
             value = 'value'
         )
+        
+        user_auth = UserAuthentication(
+            is_authenticated=True,
+            header_key="Authorization",
+            header_value="Bearer token"
+        )
            
         invocation_content = InvocationContent(
-            function_id = 1,
+            function_id = "1",
             args = [invocation_arg],
             state = '',
             result = '',
-            user_id = 1
+            user_id = "1",
+            user_auth = user_auth
         )
         
         invocation = CompletedInvocation(
-            id = 1,
-            invoker_username = 1,
-            created_at = '2020-01-01  00:00:00',
-            updated_at = '2020-01-01  00:00:00',
-            content=  invocation_content
+            id = "1",
+            invoker_username = "test_user",
+            created_at = '2020-01-01 00:00:00',
+            updated_at = '2020-01-01 00:00:00',
+            content= invocation_content,
+            invoker_id=1
         )
         
         override_invoker_id.return_value = invocation
@@ -90,7 +107,7 @@ class TestInvocations(TestCase):
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['code'], 200)
         self.assertEqual(result['id'], 1)
-        self.assertEqual(result['updated_at'], '2020-01-01  00:00:00')
+        self.assertEqual(result['updated_at'], '2020-01-01 00:00:00')
         
     @patch.dict('os.environ', {'CONSUMER_GROUP': 'test_consumer_group', 'CONSUMER_CHANNEL': 'test_consumer_channel'})
     @patch('controllers.faas.invocations.get_invocation', side_effect=lambda x, y, z: {'status': 'ok', 'code': 200, 'id': 1, 'updated_at': '2020-01-01  00:00:00'})

@@ -58,7 +58,30 @@ class TestAdminProject(TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(response_status_code, 200)
         self.assertIsInstance(result, JSONResponse)
-        self.assertEqual(result.body.decode(), f'{{"access_token":null,"created_at":null,"git_username":null,"gitlab_host":null,"gitlab_project_id":"1","gitlab_token":"{self.test_token}","gitlab_url":"https://gitlab.comwork.io","gitlab_username":"amirghedira","id":1,"instances":[],"name":"test_project","namespace_id":null,"type":"vm","url":"https://gitlab.comwork.io/dynamic/test_project","user":null,"user_id":1,"userid":null,"playbooks":[]}}')
+        self.maxDiff = None
+        import json
+        actual_json = json.loads(result.body.decode())
+        expected_json = {
+            "access_token": None,
+            "created_at": None,
+            "git_username": None,
+            "gitlab_host": None,
+            "gitlab_project_id": "1",
+            "gitlab_token": self.test_token,
+            "gitlab_url": "https://gitlab.comwork.io",
+            "gitlab_username": "amirghedira",
+            "id": 1,
+            "instances": [],
+            "name": "test_project",
+            "namespace_id": None,
+            "playbooks": [],
+            "type": "vm",
+            "url": "https://gitlab.comwork.io/dynamic/test_project",
+            "user": None,
+            "user_id": 1,
+            "userid": None
+        }
+        self.assertEqual(actual_json, expected_json)
 
     @patch('entities.User.User.getUserByEmail')
     @patch('entities.Project.Project.save')
@@ -93,7 +116,12 @@ class TestAdminProject(TestCase):
         payload = ProjectAdminSchema(
             name = "test_project",
             email = "username@email.com",
-            type = "vm"
+            type = "vm",
+            host = "default_host",
+            token = self.test_token,
+            git_username = "default_git_username",
+            git_useremail = "default_git_useremail",
+            namespace = "default_namespace"
         )
 
         # When

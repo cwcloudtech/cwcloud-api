@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
 
 class RegistrySchema(BaseModel):
@@ -8,5 +8,5 @@ class RegistrySchema(BaseModel):
 
 
 class RegistryUpdateSchema(BaseModel):
-    email: Optional[str]
+    email: Optional[str] = None
     update_creds: Optional[bool] = False

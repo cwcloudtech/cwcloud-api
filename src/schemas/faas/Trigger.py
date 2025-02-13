@@ -5,11 +5,11 @@ from schemas.faas.TriggerContent import TriggerContent
 
 class Trigger(BaseModel):
     kind: str
-    owner_id: Optional[int]
+    owner_id: Optional[int] = None
     content: TriggerContent
 
 class CompletedTrigger(Trigger):
-    id: Optional[str]
-    owner_username: Optional[str]
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    id: Optional[str] = None
+    owner_username: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None

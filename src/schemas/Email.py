@@ -8,23 +8,23 @@ class AttachmentSchema(BaseModel):
 
 class EmailSchema(BaseModel):
     from_: Optional[EmailStr] = Field(None, alias="from")
-    from_name: Optional[str]
+    from_name: Optional[str] = None
     to: EmailStr
-    cc: Optional[EmailStr]
-    bcc: Optional[EmailStr]
-    replyto: Optional[EmailStr]
+    cc: Optional[EmailStr] = None
+    bcc: Optional[EmailStr] = None
+    replyto: Optional[EmailStr] = None
     subject: str
-    content: Optional[str]
-    attachment: Optional[AttachmentSchema]
+    content: Optional[str] = None
+    attachment: Optional[AttachmentSchema] = None
 
 class EmailAdminSchema(BaseModel):
     from_: EmailStr = Field(..., alias = "from")
-    from_name: Optional[str]
+    from_name: Optional[str] = None
     to: EmailStr
-    cc: Optional[EmailStr]
-    bcc: Optional[EmailStr]
-    replyto: Optional[EmailStr]
+    cc: Optional[EmailStr] = None
+    bcc: Optional[EmailStr] = None
+    replyto: Optional[EmailStr] = None
     subject: str
-    content: Optional[str]
-    attachment: Optional[AttachmentSchema]
+    content: Optional[str] = None
+    attachment: Optional[AttachmentSchema] = None
     templated: Optional[bool] = False

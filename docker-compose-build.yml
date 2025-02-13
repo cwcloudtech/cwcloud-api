@@ -1,45 +1,56 @@
-version: '3.8'
 services:
   comwork_cloud_api:
     restart: always
-    image: cwcloud-api:latest
+    image: ${CI_REGISTRY}/cwcloud-api:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: api
+      cache_from: &cwcloud_cache
+        - type=registry,ref=${CI_REGISTRY}/cwcloud-api:${VERSION}
+
   comwork_cloud_consumer:
     restart: always
-    image: cwcloud-consumer:latest
+    image: ${CI_REGISTRY}/cwcloud-consumer:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: consumer
+      cache_from: *cwcloud_cache
+
   comwork_cloud_scheduler:
     restart: always
-    image: cwcloud-scheduler:latest
+    image: ${CI_REGISTRY}/cwcloud-scheduler:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: scheduler
+      cache_from: *cwcloud_cache
+
   comwork_cloud_tests:
-    image: cwcloud-tests:latest
+    image: ${CI_REGISTRY}/cwcloud-tests:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: unit_tests
+      cache_from: *cwcloud_cache
     volumes:
       - ./cloud_environments_build.yml:/app/cloud_environments.yml
+
   comwork_cloud_linter:
-    image: cwcloud-linter:latest
+    image: ${CI_REGISTRY}/cwcloud-linter:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: linter
+      cache_from: *cwcloud_cache
+
   comwork_cloud_bandit:
-    image: cwcloud-bandit:latest
+    image: ${CI_REGISTRY}/cwcloud-bandit:${VERSION}
     build:
       context: .
       dockerfile: ./Dockerfile
       target: code_scanner
+      cache_from: *cwcloud_cache
     volumes:
       - .:/app
