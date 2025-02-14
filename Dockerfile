@@ -21,7 +21,7 @@ COPY --from=wkhtmltopdf /bin/wkhtmltoimage /bin/wkhtmltoimage
 COPY --from=wkhtmltopdf /lib/libwkhtmltox* /lib/
 
 RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
-    apk add --no-cache git curl libpq-dev musl-dev linux-headers && \
+    apk add --no-cache bash git curl libpq-dev musl-dev linux-headers && \
     curl -fsSL https://get.pulumi.com | sh
 
 COPY ./requirements.txt /app/requirements.txt
@@ -47,7 +47,7 @@ CMD ["python", "src/scheduler.py"]
 FROM api as consumer
 
 RUN mkdir -p /functions && \
-    apk add --no-cache bash nodejs go jq
+    apk add --no-cache nodejs go jq
 
 CMD ["python", "src/consumer.py"]
 
