@@ -9,6 +9,7 @@ FROM python:${PYTHON_VERSION} as api
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=UTF-8 \
+    TZ=UTC \
     SLACK_TRIGGER="off" \
     LISTEN_ADDR="0.0.0.0" \
     PATH="/root/.pulumi/bin:${PATH}" \
@@ -21,7 +22,7 @@ COPY --from=wkhtmltopdf /bin/wkhtmltoimage /bin/wkhtmltoimage
 COPY --from=wkhtmltopdf /lib/libwkhtmltox* /lib/
 
 RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
-    apk add --no-cache bash git curl libpq-dev musl-dev linux-headers && \
+    apk add --no-cache bash tzdata git curl libpq-dev musl-dev linux-headers && \
     curl -fsSL https://get.pulumi.com | sh
 
 COPY ./requirements.txt /app/requirements.txt

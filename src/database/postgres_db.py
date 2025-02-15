@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import QueuePool
 
+from exceptions.CwHTTPException import CwHTTPException
 from utils.common import get_env_int
 from utils.logger import log_msg
 
@@ -38,7 +39,11 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except CwHTTPException as cwe:
+        log_msg("WARN", f"[get_db] unexpected CwHTTPException: e.msg = {cwe.message}, e.status_code = {cwe.status_code}")
+        raise cwe
     except Exception as e:
-        log_msg("ERROR", f"[get_db] unexpected error: e.type = {type(e).__name__}, e.file = {__file__}, e.lno = {e.__traceback__.tb_lineno}, e.msg={e}")
+        log_msg("ERROR", f"[get_db] unexpected error: e.type = {type(e).__name__}, e.file = {__file__}, e.lno = {e.__traceback__.tb_lineno}, e.msg={str(e)}")
+        raise e
     finally:
         db.close()

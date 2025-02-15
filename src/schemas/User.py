@@ -14,8 +14,8 @@ class UserSchema(BaseModel):
     created_at: Optional[str] = datetime.now().isoformat()
 
     class config:
-        orm_mode = True
-        allow_population_by_field_name = True
+        from_attributes = True
+        populate_by_name = True
         arbitrary_types_allowed = True
 
 class ListUserResponse(BaseModel):
@@ -40,8 +40,8 @@ class UserLoginSchema(BaseModel):
     password: str
 
     class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
+        from_attributes = True
+        populate_by_name = True
         arbitrary_types_allowed = True
 
 class UserResponse(BaseModel):
