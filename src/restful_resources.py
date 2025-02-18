@@ -9,7 +9,8 @@ def import_resources(app):
     from routes.auth import api_auth
     from middleware import auth_guard
     from routes.access import api_access
-    from routes.ai import api_model, api_prompt
+    from routes.ai import api_prompt
+    from routes.ai import api_adapter
     from routes.api_keys import api_keys
     from routes.bucket import api_bucket
     from routes.contact import api_contact
@@ -80,7 +81,7 @@ def import_resources(app):
     app.include_router(api_invocation.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_trigger_kinds.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_trigger.router, tags = ['Faas'], prefix = f'/{version}/faas')
-    app.include_router(api_model.router, tags = ['AI'], prefix = f'/{version}/ai')
+    app.include_router(api_adapter.router, tags = ['AI'], prefix = f'/{version}/ai')
     app.include_router(api_prompt.router, tags = ['AI'], prefix = f'/{version}/ai')
     app.include_router(api_deployments.router, tags = ['Kubernetes Apps deployments'], prefix = f'/{version}/kubernetes/deployment')
     app.include_router(api_object_type.router, tags = ['IoT'], prefix = f'/{version}/iot')

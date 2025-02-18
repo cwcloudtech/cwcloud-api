@@ -13,11 +13,11 @@ from utils.observability.enums import Action, Method
 
 router = APIRouter()
 
-_span_prefix = "ai-models"
-_counter = create_counter("ai_model_api", "CWAI Model API counter")
+_span_prefix = "ai-adapters"
+_counter = create_counter("ai_adapter_api", "CWAI Model API counter")
 
-@router.get("/models")
-def get_model(current_user: Annotated[UserSchema, Depends(get_current_active_user)]):
+@router.get("/adapters")
+def get_adapters(current_user: Annotated[UserSchema, Depends(get_current_active_user)]):
 
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET)):
         increment_counter(_counter, Method.GET, Action.ALL)    

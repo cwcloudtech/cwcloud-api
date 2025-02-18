@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 
 from middleware.auth_guard import get_current_active_user
 from schemas.User import UserSchema
-from schemas.Ai import PromptSchema
 
 from utils.observability.cid import get_current_cid
 from utils.observability.otel import get_otel_tracer
@@ -17,7 +16,7 @@ _span_prefix = "ai-prompt"
 _counter = create_counter("ai_prompt_api", "CWAI Prompt API counter")
 
 @router.post("/prompt", status_code = status.HTTP_201_CREATED)
-def create_prompt(current_user: Annotated[UserSchema, Depends(get_current_active_user)], prompt: PromptSchema, response: Response):
+def create_prompt(current_user: Annotated[UserSchema, Depends(get_current_active_user)], response: Response):
     with get_otel_tracer().start_as_current_span("{}-{}".format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
 
