@@ -5,5 +5,5 @@ from utils.kubernetes.k8s_management import get_dumped_json
 
 def get_clusters_limited(current_user, db):
     clusters = Cluster.getAllForUser(db) 
-    response = get_dumped_json(clusters)
-    return JSONResponse(content = response, status_code = 200)
+    cluster_dicts = [{"id": cluster.id, "name": cluster.name} for cluster in clusters]
+    return JSONResponse(content = get_dumped_json(cluster_dicts), status_code = 200)
