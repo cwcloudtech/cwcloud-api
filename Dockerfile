@@ -1,9 +1,7 @@
 ARG PYTHON_VERSION=3.13.1-alpine
 ARG FLYWAYDB_VERSION=9.20-alpine
-ARG WKHTMLTOPDF_VERSION=3.21.2-0.12.6-full
 
 # Base image
-FROM surnet/alpine-wkhtmltopdf:${WKHTMLTOPDF_VERSION} as wkhtmltopdf
 FROM python:${PYTHON_VERSION} as api
 
 # Set environment variables
@@ -16,10 +14,6 @@ ENV PYTHONUNBUFFERED=1 \
     WAIT_TIME=10
 
 WORKDIR /app
-
-COPY --from=wkhtmltopdf /bin/wkhtmltopdf /bin/wkhtmltopdf
-COPY --from=wkhtmltopdf /bin/wkhtmltoimage /bin/wkhtmltoimage
-COPY --from=wkhtmltopdf /lib/libwkhtmltox* /lib/
 
 RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
     apk add --no-cache bash tzdata git curl libpq-dev musl-dev linux-headers && \
