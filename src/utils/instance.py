@@ -35,7 +35,7 @@ def check_exist_instance(userId, instance_name, db):
     return False
 
 def check_instance_name_validity(name):
-    special_characters = " !\"#$%&'()*+,./:;<=>?@[\]^_`{|}~"
+    special_characters = " !\"#$%&'()*+,./:;<=>?@[]^_`{|}~"
     if any(c in special_characters for c in name):
         raise HTTPError("name_contains_invalid_characters", 400, 'name contains invalid caracters', hdrs = {"i18n_code": "name_contains_invalid_characters"}, fp = None)
     if len(name)>50:

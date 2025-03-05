@@ -5,7 +5,7 @@ from jinja2 import Environment, FileSystemLoader, BaseLoader, select_autoescape
 
 from adapters.AdapterConfig import get_adapter
 from utils.command import get_script_output
-from utils.common import get_env_int, get_src_path, is_not_empty, is_empty_key, is_not_empty_key, AUTOESCAPE_EXTENSIONS
+from utils.common import get_env_int, get_src_path, is_not_empty, is_empty_key, is_not_empty_key, AUTOESCAPE_EXTENSIONS, is_true
 from utils.faas.vars import FAAS_API_TOKEN, FAAS_API_URL
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.observability.otel import get_otel_tracer
@@ -144,9 +144,12 @@ async def handle(msg):
           )
 
         function_file.write(main_content)
-      payload['content']['result'] = "{}".format(get_script_output("{}/{}_eval.sh {}".format(_consume_src_path, ext, invocation_id)))
 
-      quiet_remove(function_file_path)
+      status, output = get_script_output("{}/{}_eval.sh {}".format(_consume_src_path, ext, invocation_id))
+      payload['content']['result'] = "{}".format(output)
+
+      if is_true(status):
+        quiet_remove(function_file_path)
       update_invocation(invocation_id, payload)
     except Exception as e:
       error_invocation(invocation_id, payload, "e.type = {}, e.msg = {}".format(type(e), e))
