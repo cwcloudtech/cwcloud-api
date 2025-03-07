@@ -29,7 +29,7 @@ def is_boolean(var):
 def is_not_empty(var):
     if isinstance(var, bool):
         return var
-    elif isinstance(var, int):
+    elif isinstance(var, int) or isinstance(var, float):
         return not var == 0
     elif isinstance(var, list) or isinstance(var, dict):
         return len(var) > 0
@@ -59,9 +59,10 @@ def del_key_if_exists(vdict, key):
         del vdict[key]
 
 def is_numeric(var):
-    if isinstance(var, int):
+    if isinstance(var, int) or isinstance(var, float):
         return True
-    return is_not_empty(var) and str(var).isnumeric()
+
+    return is_not_empty(var) and bool(re.match(r'^[0-9\.]+$', var))
 
 def is_not_numeric(var):
     return not is_numeric(var)
