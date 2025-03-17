@@ -1,7 +1,5 @@
-import os
 import psutil
 
-from datetime import datetime
 from psutil._common import bytes2human
 
 def disk_usage():
