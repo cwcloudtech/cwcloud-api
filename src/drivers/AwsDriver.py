@@ -17,7 +17,7 @@ from utils.dynamic_name import rehash_dynamic_name
 from utils.logger import log_msg
 from utils.provider import get_specific_config, get_provider_dns_zones
 from utils.list import unmarshall_list_array
-from utils.aws_client import get_driver_access_key_id, get_driver_secret_access_key, create_aws_bucket, create_aws_registry, delete_aws_user_bucket, delete_aws_user_registry, get_aws_bucket_name, get_aws_registry_name, update_aws_bucket_credentials, update_aws_registry_credentials, get_driver_access_key_id_dns_test, get_driver_secret_access_key_dns_test 
+from utils.aws_client import get_driver_access_key_id, get_driver_secret_access_key, create_aws_bucket, create_aws_registry, delete_aws_user_bucket, delete_aws_user_registry, get_aws_bucket_name, get_aws_registry_name, update_aws_bucket_credentials, update_aws_registry_credentials, get_driver_access_key_id, get_driver_secret_access_key 
 
 CACHE_ADAPTER = get_adapter('cache')
 
