@@ -152,7 +152,7 @@ def send_result_to_callbacks(payload, invocation, function):
         if is_not_empty_key(serverless_function['content'], 'callback_url'):
             callback_headers = { "Authorization": serverless_function['content']['callback_authorization_header'], "Content-Type": "application/json" } if is_not_empty_key(serverless_function['content'], 'callback_authorization_header') else { "Content-Type": "application/json" }
             callback_url = serverless_function['content']['callback_url']
-            log_msg("DEBUG", "[consume][handle] invoke callback: {}".format(callback_url))
+            log_msg("DEBUG", "[send_result_to_callbacks] invoke callback: {}".format(callback_url))
             requests.post(callback_url, json=safe_payload, headers=callback_headers, timeout=HTTP_REQUEST_TIMEOUT)
         else:
             if is_not_empty_key(serverless_function['content'], 'callbacks'):
@@ -161,9 +161,10 @@ def send_result_to_callbacks(payload, invocation, function):
                     if is_not_empty_key(callback, 'endpoint'):
                         if callback['type'] == "http":
                             callback_headers = { "Authorization": callback['token'], "Content-Type": "application/json" } if is_not_empty_key(callback, 'token') else { "Content-Type": "application/json" }
-                            log_msg("DEBUG", "[consume][handle] invoke callback: {}".format(callback['endpoint']))
+                            log_msg("INFO", f"[send_result_to_callbacks] invoke callback: type={callback['type']}, endpoint={callback['endpoint']}")
                             requests.post(callback['endpoint'], json=safe_payload, headers=callback_headers, timeout=HTTP_REQUEST_TIMEOUT)
                         elif callback['type'] == "websocket" or callback['type'] == "mqtt":
+                            log_msg("INFO", f"[send_result_to_callbacks] invoke callback: type={callback['type']}, endpoint={callback['endpoint']}")
                             asyncio.run(async_send_payload_in_realtime(callback, safe_payload))
 
 def complete(id, payload, current_user, db):
