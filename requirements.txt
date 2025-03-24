@@ -1,4 +1,4 @@
-pulumi>=3.157.0, <4.0.0
+pulumi==3.148.0
 markupsafe>=2.1.1, <3.0.0
 pulumi-azure-native>=2.86.0, <3.0.0
 pulumi-openstack>=5.0.2, <6.0.0
