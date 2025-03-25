@@ -1,4 +1,5 @@
 import json
+import asyncio
 import paho.mqtt.client as paho
 
 from paho import mqtt
@@ -37,8 +38,13 @@ async def send_payload_in_realtime(callback, payload):
         client = paho.Client(client_id=client_id, userdata=user_data, protocol=paho.MQTTv5)
     elif callback['type'] == "websocket":
         log_msg("DEBUG", "[consume][handle] invoke websocket callback: {}".format(endpoint))
-        client = paho.Client(client_id=client_id, userdata=user_data, transport='websockets') 
+        client = paho.Client(client_id=client_id, userdata=user_data, transport='websockets')
+
     client.on_connect = on_connect
+    client.on_subscribe = on_subscribe
+    client.on_message = on_message
+    client.on_publish = on_publish
+
     if certificates_are_required:
         create_cert_locally("iot_hub_certificate", certificates['iot_hub_certificate'])
         create_cert_locally("device_certificate", certificates['device_certificate'])
@@ -51,15 +57,21 @@ async def send_payload_in_realtime(callback, payload):
         )
     else:
         client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+
     client.username_pw_set(username, password)
     client.connect(endpoint, port)
-    client.on_subscribe = on_subscribe
-    client.on_message = on_message
-    client.on_publish = on_publish
+
+    client.loop_start()
+
     client.subscribe(subscription, qos=qos)
     client.publish(topic, payload=json.dumps(payload), qos=qos)
+
+    await asyncio.sleep(1) #? Give some time for the message to be sent before stopping the loop
+
     if certificates_are_required:
         delete_cert_locally("iot_hub_certificate")
         delete_cert_locally("device_certificate")
         delete_cert_locally("device_key_certificate")
-    # client.loop_forever()
+    
+    client.loop_stop()
+    client.disconnect()
