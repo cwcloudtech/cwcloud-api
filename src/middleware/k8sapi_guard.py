@@ -9,6 +9,7 @@ from database.postgres_db import get_db
 
 from utils.common import is_false, is_not_empty, is_true
 from utils.flag import is_flag_enabled
+from utils.observability.cid import get_current_cid
 
 def k8sapi_required(current_user: UserSchema = Depends(get_current_user), db: Session = Depends(get_db)):
     is_granted = is_true(current_user.is_admin)
@@ -18,6 +19,6 @@ def k8sapi_required(current_user: UserSchema = Depends(get_current_user), db: Se
         is_granted = is_flag_enabled(user.enabled_features, 'k8sapi')
 
     if is_false(is_granted):
-        raise CwHTTPException(message = {"error": "permission denied", "i18n_code": "not_k8sapi"}, status_code = status.HTTP_403_FORBIDDEN)
+        raise CwHTTPException(message = {"status": "ko", "error": "permission denied", "i18n_code": "not_k8sapi", "cid": get_current_cid()}, status_code = status.HTTP_403_FORBIDDEN)
 
     return current_user
