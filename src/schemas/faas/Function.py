@@ -5,6 +5,7 @@ from schemas.faas.FunctionContent import FunctionContent
 
 class BaseFunction(BaseModel):
     is_public: Optional[bool] = None
+    is_protected: bool = False
     owner_id: Optional[int] = None
     content: FunctionContent
 

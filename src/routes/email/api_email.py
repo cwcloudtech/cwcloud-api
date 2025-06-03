@@ -35,7 +35,7 @@ def send_email(current_user: Annotated[UserSchema, Depends(get_current_active_us
         if is_empty(payload.from_):
             payload.from_ = current_user.email
 
-        email = payload.dict(by_alias = True)
+        email = payload.model_dump(by_alias = True)
         log_msg("DEBUG", "[api_email] email = {}".format(email))
 
         return EMAIL_ADAPTER().send(email)

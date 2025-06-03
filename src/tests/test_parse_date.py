@@ -47,7 +47,7 @@ class TestParseDate(TestCase):
 
         # Then
         self.assertEqual(fdate['status'], False)
-        self.assertEqual(fdate['value'], "")
+        self.assertEqual(fdate['value'], None)
 
     def test_date_already_datetime(self):
         # Given

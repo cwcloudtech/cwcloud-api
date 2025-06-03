@@ -104,7 +104,8 @@ class User(Base):
                 "k8sapi": payload.enabled_features.k8sapi,
                 "daasapi": payload.enabled_features.daasapi,
                 "iotapi": payload.enabled_features.iotapi,
-                "monitorapi": payload.enabled_features.monitorapi
+                "monitorapi": payload.enabled_features.monitorapi,
+                "storageapi": payload.enabled_features.storageapi
             }
         })
         db.commit()

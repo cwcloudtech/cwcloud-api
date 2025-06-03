@@ -63,6 +63,7 @@ class EnabledFeatures(BaseModel):
     k8sapi: Optional[bool] = False
     iotapi: Optional[bool] = False
     monitorapi: Optional[bool] = False
+    storageapi: Optional[bool] = False
 
 class UserEmailUpdateSchema(BaseModel):
     email: str

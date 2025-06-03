@@ -11,6 +11,7 @@ class FunctionEntity(Base):
     __tablename__ = 'faas_function'
     id = Column(CachedGUID, primary_key=True, server_default=GUID_SERVER_DEFAULT_POSTGRESQL)
     is_public = Column(Boolean, nullable=False)
+    is_protected = Column(Boolean, nullable=False, default=False)
     content = Column(JSONB, nullable=False)
     created_at = Column(String, nullable=False, default=datetime.now)
     updated_at = Column(String, nullable=False, default=datetime.now)

@@ -106,6 +106,7 @@ def override_function(id, payload, current_user, db):
     db_function.update({
         "owner_id": result['owner_id'],
         "is_public": is_true(payload.is_public),
+        "is_protected": is_true(payload.is_protected),
         "content": payload.content.dict(),
         "updated_at": updated_at
     })
@@ -157,6 +158,14 @@ def delete_function(id, current_user, db):
                 'code': 403,
                 'message': "You have no write right on '{}' function".format(id),
                 'i18n_code': 'faas_not_write_right'
+            }
+            
+        if is_true(db_function.is_protected):
+            return {
+                'status': 'ko',
+                'code': 403,
+                'message': "You cannot delete a protected function",
+                'i18n_code': 'faas_function_protected'
             }
     
         function.delete(synchronize_session=False)

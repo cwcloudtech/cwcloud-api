@@ -34,7 +34,7 @@ def send_email(current_user: Annotated[UserSchema, Depends(admin_required)], pay
         if is_empty(payload.from_):
             payload.from_ = current_user.email
 
-        email = payload.dict(by_alias = True)
+        email = payload.model_dump(by_alias=True)
         log_msg("DEBUG", "[api_admin_email] email = {}".format(email))
 
         return send_templated_email(email) if "templated" in email and is_true(email['templated']) else EMAIL_ADAPTER().send(email)
