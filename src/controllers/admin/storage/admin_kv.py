@@ -1,7 +1,9 @@
 import base64
 import json
 from datetime import datetime
+from binascii import Error as Base64Error
 from fastapi.responses import JSONResponse
+from typing import List, Dict
 
 from entities.StorageKV import StorageKV
 from entities.User import User
@@ -11,22 +13,111 @@ from controllers.storage_kv import _store_in_database, _store_with_ttl
 from utils.common import is_empty, is_not_empty
 from utils.logger import log_msg
 from utils.observability.cid import get_current_cid
+from utils.redis import create_redis_key, get_redis_keys_for_user
 
-def create_redis_key(user_id: int, key: str) -> str:
-    combined_key = f"{user_id}_{key}"
-    return base64.b64encode(combined_key.encode('utf-8')).decode('utf-8')
+def get_redis_keys_all_users(search: str = None):
+    redis_results = []
+    user_cache = {}
+    
+    cursor = 0
+    while True:
+        cursor, keys = redis_client.scan(cursor=cursor, count=100)
+        valid_keys = []
+        
+        for redis_key in keys:
+            try:
+                decoded_key = base64.b64decode(redis_key).decode('utf-8')
+            except (Base64Error, UnicodeDecodeError) as e:
+                log_msg("debug", f"Failed to decode Redis key {redis_key}: {e}")
+                continue
+            
+            if '_' not in decoded_key:
+                continue
+                
+            user_id_str, key = decoded_key.split('_', 1)
+            try:
+                user_id = int(user_id_str)
+            except ValueError:
+                log_msg("debug", f"Invalid user_id format in key {decoded_key}")
+                continue
+            
+            if search and search.strip() and search.lower() not in key.lower():
+                continue
+                
+            valid_keys.append((redis_key, user_id, key))
+
+        if valid_keys:
+            pipe = redis_client.pipeline()
+            for redis_key, _, _ in valid_keys:
+                pipe.get(redis_key)
+                pipe.ttl(redis_key)
+            
+            try:
+                results = pipe.execute()
+            except Exception as e:
+                log_msg("error", f"Redis pipeline execution failed: {e}")
+                continue
+            
+            for i, (redis_key, user_id, key) in enumerate(valid_keys):
+                value = results[i * 2]
+                ttl_seconds = results[i * 2 + 1]
+                
+                if value:
+                    if user_id not in user_cache:
+                        user_cache[user_id] = None
+                    
+                    current_time = datetime.now().isoformat()
+                    ttl_hours = round(ttl_seconds / 3600, 2) if ttl_seconds > 0 else None
+                    
+                    try:
+                        payload = json.loads(value)
+                    except (json.JSONDecodeError, TypeError) as e:
+                        log_msg("warning", f"Failed to parse JSON for key {key}: {e}")
+                        continue
+                    
+                    redis_results.append({
+                        'id': f"redis_{redis_key.decode() if isinstance(redis_key, bytes) else redis_key}",
+                        'key': key,
+                        'user_id': user_id,
+                        'user_email': None,
+                        'payload': payload,
+                        'created_at': current_time,
+                        'updated_at': current_time,
+                        'source': 'redis',
+                        'ttl': ttl_hours
+                    })
+        
+        if cursor == 0:
+            break
+    
+    return redis_results, user_cache
+
+def populate_user_emails(results: List[Dict], user_cache: Dict, db):
+    user_ids = set(user_cache.keys())
+    if user_ids:
+        users = db.query(User).filter(User.id.in_(user_ids)).all()
+        for user in users:
+            user_cache[user.id] = user.email
+
+    for result in results:
+        if 'user_id' in result:
+            result['user_email'] = user_cache.get(result['user_id'], "Unknown")
 
 def get_all_storage_kvs(search: str = None, start_index: int = 0, max_results: int = 20, db = None):
     if search and search.strip():
         storage_kvs = StorageKV.searchStorageKVsByKey(search, db)
     else:
-        storage_kvs = db.query(StorageKV).all()
+        storage_kvs = db.query(StorageKV).limit(1000).all()
+
+    user_ids = list(set(kv.user_id for kv in storage_kvs))
+    users_dict = {}
+    if user_ids:
+        users = db.query(User).filter(User.id.in_(user_ids)).all()
+        users_dict = {user.id: user.email for user in users}
 
     db_results = []
     for kv in storage_kvs:
-        user = db.query(User).filter(User.id == kv.user_id).first()
-        email = user.email if user else "Unknown"
-        
+        email = users_dict.get(kv.user_id, "Unknown")
         db_results.append({
             'id': str(kv.id),
             'key': kv.storage_key,
@@ -39,44 +130,8 @@ def get_all_storage_kvs(search: str = None, start_index: int = 0, max_results: i
             'ttl': None
         })
 
-    all_keys = redis_client.keys("*")
-    redis_results = []
-    
-    for redis_key in all_keys:
-        try:
-            decoded_key = base64.b64decode(redis_key).decode('utf-8')
-            if '_' in decoded_key:
-                user_id_str, key = decoded_key.split('_', 1)
-                try:
-                    user_id = int(user_id_str)
-                    user = db.query(User).filter(User.id == user_id).first()
-                    email = user.email if user else "Unknown"
-
-                    if search and search.strip() and search.lower() not in key.lower():
-                        continue
-                        
-                    value = redis_client.get(redis_key)
-                    if value:
-                        current_time = datetime.now().isoformat()
-                        ttl_seconds = redis_client.ttl(redis_key)
-                        ttl_hours = round(ttl_seconds / 3600, 2) if ttl_seconds > 0 else None
-                        
-                        redis_results.append({
-                            'id': f"redis_{redis_key}",
-                            'key': key,
-                            'user_id': user_id,
-                            'user_email': email,
-                            'payload': json.loads(value),
-                            'created_at': current_time,
-                            'updated_at': current_time,
-                            'source': 'redis',
-                            'ttl': ttl_hours
-                        })
-                except ValueError:
-                    continue
-        except Exception as e:
-            log_msg("ERROR", f"Error processing Redis key {redis_key}: {str(e)}")
-            continue
+    redis_results, user_cache = get_redis_keys_all_users(search)
+    populate_user_emails(redis_results, user_cache, db)
 
     combined_results = db_results + redis_results
     sorted_results = sorted(combined_results, key=lambda x: (x['user_id'], x['key']))
@@ -121,37 +176,14 @@ def get_user_storage_kvs(user_id: int, search: str = None, start_index: int = 0,
             'ttl': None
         })
 
-    all_keys = redis_client.keys("*")
-    redis_results = []
-    
-    for redis_key in all_keys:
-        try:
-            decoded_key = base64.b64decode(redis_key).decode('utf-8')
-            if decoded_key.startswith(f"{user_id}_"):
-                key = decoded_key.split('_', 1)[1]
-                if search and search.strip() and search.lower() not in key.lower():
-                    continue
-                    
-                value = redis_client.get(redis_key)
-                if value:
-                    current_time = datetime.now().isoformat()
-                    ttl_seconds = redis_client.ttl(redis_key)
-                    ttl_hours = round(ttl_seconds / 3600, 2) if ttl_seconds > 0 else None
-                    
-                    redis_results.append({
-                        'id': f"redis_{redis_key}",
-                        'key': key,
-                        'user_id': user_id,
-                        'user_email': user.email,
-                        'payload': json.loads(value),
-                        'created_at': current_time,
-                        'updated_at': current_time,
-                        'source': 'redis',
-                        'ttl': ttl_hours
-                    })
-        except Exception as e:
-            log_msg("ERROR", f"Error processing Redis key {redis_key}: {str(e)}")
-            continue
+    redis_results = get_redis_keys_for_user(user_id, search)
+
+    for result in redis_results:
+        result.update({
+            'id': f"redis_{create_redis_key(user_id, result['key'])}",
+            'user_id': user_id,
+            'user_email': user.email
+        })
 
     combined_results = db_results + redis_results
     sorted_results = sorted(combined_results, key=lambda x: x['key'])
@@ -284,4 +316,4 @@ def update_user_kv(user_id: int, key: str, payload: StorageKVUpdateRequest, db):
     if is_not_empty(payload.ttl) and payload.ttl > 0:
         return _store_with_ttl(user_id, key, payload.payload, payload.ttl, db)
     else:
-        return _store_in_database(user_id, key, payload.payload, db, True)
+        return _store_in_database(user_id, key, payload.payload, db, True, True)

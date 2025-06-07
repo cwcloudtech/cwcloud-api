@@ -1,4 +1,3 @@
-import base64
 import json
 from datetime import datetime
 import uuid
@@ -10,12 +9,8 @@ from schemas.User import UserSchema
 from schemas.StorageKV import StorageKVCreateRequest, StorageKVUpdateRequest
 from database.redis_db import redis_client
 from utils.common import is_empty, is_not_empty
-from utils.logger import log_msg
 from utils.observability.cid import get_current_cid
-
-def create_redis_key(user_id: int, key: str) -> str:
-    combined_key = f"{user_id}_{key}"
-    return base64.b64encode(combined_key.encode('utf-8')).decode('utf-8')
+from utils.redis import create_redis_key, get_redis_keys_for_user
 
 def _store_with_ttl(user_id, key, payload, ttl, db):
     StorageKV.deleteUserStorageKV(user_id, key, db)
@@ -38,23 +33,26 @@ def _store_with_ttl(user_id, key, payload, ttl, db):
         'cid': get_current_cid()
     }, status_code = 201)
 
-def _store_in_database(user_id, key, payload, db, is_update):
+def _store_in_database(user_id, key, payload, db, is_update, key_existed=False):
     redis_key = create_redis_key(user_id, key)
     redis_client.delete(redis_key)
 
     existing_kv = StorageKV.findUserStorageKVByKey(user_id, key, db)
 
-    if existing_kv and is_update:
+    if existing_kv:
         updated_kv = StorageKV.updateStorageKV(user_id, key, payload, db)
         if updated_kv:
+            status_code = 200 if (is_update or key_existed) else 201
+            message = 'Storage key successfully updated' if (is_update or key_existed) else 'Storage key successfully created'
+            i18n_code = 'storage_kv_updated' if (is_update or key_existed) else 'storage_kv_created'
             return JSONResponse(content = {
                 'status': 'ok',
-                'message': 'Storage key successfully updated',
+                'message': message,
                 'key': key,
                 'payload': payload,
-                'i18n_code': 'storage_kv_updated',
+                'i18n_code': i18n_code,
                 'cid': get_current_cid()
-            }, status_code = 200)
+            }, status_code = status_code)
 
     new_storage_kv = StorageKV(
         id=uuid.uuid4(),
@@ -89,18 +87,14 @@ def create_kv(current_user: UserSchema, payload: StorageKVCreateRequest, db):
     storage_key = payload.key
 
     existing_kv = StorageKV.findUserStorageKVByKey(user_id, storage_key, db)
-    if existing_kv:
-        return JSONResponse(content = {
-            'status': 'ko',
-            'error': f"Storage key '{storage_key}' already exists",
-            'i18n_code': 'storage_kv_conflict',
-            'cid': get_current_cid()
-        }, status_code = 409)
+    redis_key = create_redis_key(user_id, storage_key)
+    existing_in_redis = redis_client.exists(redis_key)
+    key_existed = existing_kv is not None or existing_in_redis
 
     if is_not_empty(payload.ttl) and payload.ttl > 0:
         return _store_with_ttl(user_id, storage_key, payload.payload, payload.ttl, db)
     else:
-        return _store_in_database(user_id, storage_key, payload.payload, db, False)
+        return _store_in_database(user_id, storage_key, payload.payload, db, False, key_existed)
 
 def update_kv(current_user: UserSchema, key: str, payload: StorageKVUpdateRequest, db):
     user_id = current_user.id
@@ -161,11 +155,10 @@ def get_kv(current_user: UserSchema, key: str, db):
 
 def get_all_kvs(current_user: UserSchema, search: str = None, start_index: int = 0, max_results: int = 20, db = None):
     user_id = current_user.id
-    storage_kvs_query = StorageKV.getUserStorageKVs(user_id, db)
     if search and search.strip():
         storage_kvs = StorageKV.searchUserStorageKVsByKey(user_id, search, db)
     else:
-        storage_kvs = storage_kvs_query
+        storage_kvs = StorageKV.getUserStorageKVs(user_id, db)
 
     db_results = []
     for kv in storage_kvs:
@@ -178,39 +171,11 @@ def get_all_kvs(current_user: UserSchema, search: str = None, start_index: int =
             'ttl': None
         })
 
-    all_keys = redis_client.keys("*")
-    redis_results = []
+    redis_results = get_redis_keys_for_user(user_id, search)
     
-    for redis_key in all_keys:
-        try:
-            decoded_key = base64.b64decode(redis_key.decode('utf-8') if isinstance(redis_key, bytes) else redis_key).decode('utf-8')
-            if decoded_key.startswith(f"{user_id}_"):
-                key = decoded_key.split('_', 1)[1]
-                if search and search.strip() and search.lower() not in key.lower():
-                    continue
-                    
-                value = redis_client.get(redis_key)
-                if value:
-                    current_time = datetime.now().isoformat()
-                    ttl_seconds = redis_client.ttl(redis_key)
-                    ttl_hours = round(ttl_seconds / 3600, 2) if ttl_seconds > 0 else None
-                    
-                    redis_results.append({
-                        'key': key,
-                        'payload': json.loads(value),
-                        'created_at': current_time,
-                        'updated_at': current_time,
-                        'source': 'redis',
-                        'ttl': ttl_hours
-                    })
-        except Exception as e:
-            log_msg("ERROR", f"Error processing Redis key {redis_key}: {str(e)}")
-            continue
-
     combined_results = {}
     for item in db_results:
         combined_results[item['key']] = item
-
     for item in redis_results:
         combined_results[item['key']] = item
 
