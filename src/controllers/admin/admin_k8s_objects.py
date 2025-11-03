@@ -1,18 +1,21 @@
 import yaml
 import json
+from starlette.websockets import WebSocketState
+import os
 
-from fastapi import UploadFile
-
+from fastapi import UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
+
 from kubernetes import client, config, dynamic
 from kubernetes.client.rest import ApiException
+from kubernetes.stream import stream
 
 from entities.kubernetes.Cluster import Cluster
 from entities.kubernetes.KubeconfigFile import KubeConfigFile
 
 from constants.k8s_constants import K8S_OBJECTS, K8S_RESOURCES
-from schemas.Kubernetes import ObjectAddSchema, ObjectSchema
+from schemas.Kubernetes import ObjectAddSchema, ObjectSchema, PodLogsSchema
 from schemas.User import UserSchema
 
 from utils.gitlab import GIT_HELMCHARTS_REPO_ID, GIT_HELMCHARTS_REPO_URL, read_file_from_gitlab, GIT_DEFAULT_TOKEN
@@ -321,3 +324,244 @@ def get_object(current_user: UserSchema, object: ObjectSchema, db: Session):
             'i18n_code': 'error_while_create_object',
             'cid': get_current_cid()
         }, status_code = 400)
+
+def get_cluster_pods(current_user: UserSchema, cluster_id: int, db: Session):
+    kc_content = get_cluster_configfile(current_user, cluster_id, db)
+    
+    config.load_kube_config_from_dict(kc_content)
+    v1 = client.CoreV1Api()
+    pods = v1.list_pod_for_all_namespaces()
+    pods_result = [
+        {
+            "name": pod.metadata.name, 
+            "namespace": pod.metadata.namespace, 
+            "status": pod.status.phase,
+            "ip": pod.status.pod_ip or "N/A",
+            "start_time": pod.metadata.creation_timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f') if pod.metadata.creation_timestamp else None,
+            "containers": [
+                {
+                    "name": container.name,
+                    "image": container.image,
+                    "ready": any(cs.ready for cs in pod.status.container_statuses if cs.name == container.name) if pod.status.container_statuses else False
+                } for container in pod.spec.containers
+            ]
+        } for pod in pods.items
+    ]
+
+    return JSONResponse(content = pods_result, status_code = 200)
+
+async def get_pod_logs_stream(websocket: WebSocket, current_user: UserSchema, pod_logs: PodLogsSchema, db: Session):
+    try:
+        cluster: Cluster = Cluster.getById(pod_logs.cluster_id, db)
+        if not cluster:
+            await websocket.send_text(json.dumps({
+                "status": "ko",
+                "error": "Cluster not found",
+                "i18n_code": "cluster_not_found",
+                "cid": get_current_cid()
+            }))
+            return
+
+        kubeconfigFile = KubeConfigFile.findOne(cluster.kubeconfig_file_id, db)
+        if not kubeconfigFile:
+            await websocket.send_text(json.dumps({
+                "status": "ko",
+                "error": "Kubeconfig file not found",
+                "i18n_code": "kubeconfig_not_found",
+                "cid": get_current_cid()
+            }))
+            return
+
+        kc_content = read_uploaded_yaml_file(kubeconfigFile.content)
+        config.load_kube_config_from_dict(kc_content)
+
+        v1 = client.CoreV1Api()
+        log_params = {
+            'name': pod_logs.pod_name,
+            'namespace': pod_logs.namespace,
+            'follow': True,
+            'tail_lines': pod_logs.tail_lines,
+            '_preload_content': False,
+            '_return_http_data_only': True
+        }
+
+        if pod_logs.container_name and pod_logs.container_name.strip():
+            log_params['container'] = pod_logs.container_name
+
+        stream = v1.read_namespaced_pod_log(**log_params)
+
+        for line in stream:
+            if websocket.application_state != WebSocketState.CONNECTED:
+                break
+            await websocket.send_text(line.decode("utf-8"))
+
+    except WebSocketDisconnect:
+        pass 
+    except ApiException as e:
+        try:
+            b = json.loads(e.body)
+            msg = b.get("message", "API error")
+        except Exception:
+            msg = str(e)
+        await websocket.send_text(json.dumps({
+            "status": "ko",
+            "error": msg,
+            "i18n_code": "error_while_getting_pod_logs",
+            "cid": get_current_cid()
+        }))
+    except Exception as e:
+        await websocket.send_text(json.dumps({
+            "status": "ko",
+            "error": f"Failed to stream pod logs: {str(e)}",
+            "i18n_code": "error_while_getting_pod_logs",
+            "cid": get_current_cid()
+        }))
+    finally:
+        if websocket.application_state == WebSocketState.CONNECTED:
+            await websocket.close()
+
+async def get_pod_terminal_stream(websocket: WebSocket, current_user: UserSchema, cluster_id: int, pod_name: str, namespace: str, container_name: str = None, db: Session = None):
+    try:
+        cluster: Cluster = Cluster.getById(cluster_id, db)
+        if not cluster:
+            await websocket.send_text(json.dumps({
+                "status": "ko",
+                "error": "Cluster not found",
+                "i18n_code": "cluster_not_found",
+                "cid": get_current_cid()
+            }))
+            return
+
+        kubeconfigFile = KubeConfigFile.findOne(cluster.kubeconfig_file_id, db)
+        if not kubeconfigFile:
+            await websocket.send_text(json.dumps({
+                "status": "ko",
+                "error": "Kubeconfig file not found",
+                "i18n_code": "kubeconfig_not_found",
+                "cid": get_current_cid()
+            }))
+            return
+
+        kc_content = read_uploaded_yaml_file(kubeconfigFile.content)
+        config.load_kube_config_from_dict(kc_content)
+
+        try:
+            config.load_kube_config_from_dict(kc_content)
+        except Exception:
+            try:
+                config.load_kube_config()
+            except Exception:
+                k3d_config = os.path.expanduser("~/.kube/config")
+                if os.path.exists(k3d_config):
+                    config.load_kube_config(k3d_config)
+
+        v1 = client.CoreV1Api()
+
+        current_dir = "/"
+        
+        await websocket.send_text(json.dumps({
+            "type": "prompt",
+            "data": f"$ {current_dir} "
+        }))
+
+        while websocket.application_state == WebSocketState.CONNECTED:
+            try:
+                data = await websocket.receive_text()
+                message = json.loads(data)
+
+                if message.get('type') == 'command':
+                    command = message.get('data', '')
+                    
+                    try:
+                        exec_command = ['/bin/sh', '-c', f'cd {current_dir} && {command}']
+                        
+                        if container_name and container_name.strip():
+                            resp = stream(v1.connect_get_namespaced_pod_exec,
+                                        pod_name,
+                                        namespace,
+                                        container=container_name,
+                                        command=exec_command,
+                                        stderr=True, stdin=False, stdout=True, tty=False)
+                        else:
+                            resp = stream(v1.connect_get_namespaced_pod_exec,
+                                        pod_name,
+                                        namespace,
+                                        command=exec_command,
+                                        stderr=True, stdin=False, stdout=True, tty=False)
+                        
+                        if resp:
+                            await websocket.send_text(json.dumps({
+                                "type": "output",
+                                "data": resp
+                            }))
+                        else:
+                            if command.strip().startswith('cd '):
+                                new_dir = command.strip()[3:].strip()
+                                if new_dir.startswith('/'):
+                                    current_dir = new_dir
+                                elif new_dir == '..':
+                                    if current_dir != '/':
+                                        current_dir = '/'.join(current_dir.split('/')[:-1]) or '/'
+                                elif new_dir == '.':
+                                    pass  
+                                elif new_dir == '~':
+                                    current_dir = '/root'
+                                else:
+                                    if current_dir.endswith('/'):
+                                        current_dir += new_dir
+                                    else:
+                                        current_dir += '/' + new_dir
+                                
+                                await websocket.send_text(json.dumps({
+                                    "type": "output",
+                                    "data": f"Changed directory to: {current_dir}\n"
+                                }))
+                            else:
+                                await websocket.send_text(json.dumps({
+                                    "type": "output",
+                                    "data": "Command executed successfully (no output)\n"
+                                }))
+
+                    except Exception as e:
+                        await websocket.send_text(json.dumps({
+                            "type": "output",
+                            "data": f"Error executing command: {str(e)}\n"
+                        }))
+
+                    await websocket.send_text(json.dumps({
+                        "type": "prompt",
+                        "data": f"$ {current_dir} "
+                    }))
+
+                elif message.get('type') == 'interrupt':
+                    await websocket.send_text(json.dumps({
+                        "type": "output",
+                        "data": "^C\n"
+                    }))
+                    await websocket.send_text(json.dumps({
+                        "type": "prompt",
+                        "data": f"$ {current_dir} "
+                    }))
+                elif message.get('type') == 'eof':
+                    break
+
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                await websocket.send_text(json.dumps({
+                    "type": "error",
+                    "message": f"Error processing message: {str(e)}"
+                }))
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        await websocket.send_text(json.dumps({
+            "status": "ko",
+            "error": f"Failed to start terminal session: {str(e)}",
+            "i18n_code": "error_while_getting_pod_terminal",
+            "cid": get_current_cid()
+        }))
+    finally:
+        if websocket.application_state == WebSocketState.CONNECTED:
+            await websocket.close()

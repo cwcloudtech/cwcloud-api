@@ -49,6 +49,8 @@ Action = Enum('Action', [
     'INGRESSCLASS',
     'NS',
     'SECRET',
+    'LOGS',
+    'POD',
     'ASYNCWORKER',
     'UNKNOWN'
 ])

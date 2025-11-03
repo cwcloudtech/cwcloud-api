@@ -13,7 +13,8 @@ ALL_FLAGS = [
     'k8sapi', 
     'iotapi',
     'monitorapi',
-    'storageapi'
+    'storageapi',
+    'block'
 ]
 
 def is_flag_enabled(vdict, key):

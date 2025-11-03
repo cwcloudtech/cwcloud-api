@@ -9,7 +9,7 @@ from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
 from utils.observability.counter import create_counter, increment_counter
 from utils.observability.enums import Method
-from utils.observability.tracker import TRACKER_IMAGE_PATH, get_infos_from_ip, init_tracker_img, parse_user_agent
+from utils.observability.tracker import TRACKER_IMAGE_PATH, get_client_host_from_request, get_infos_from_ip, init_tracker_img, parse_user_agent
 
 router = APIRouter()
 
@@ -26,13 +26,7 @@ def track(request: Request, format: TrackerFormat, website: str):
         increment_counter(_counter, Method.GET)
         init_tracker_img()
 
-        host = request.headers.get("X-Real-IP")
-        if is_empty(host):
-           host = request.headers.get("X-Forwarded-For")
-
-        if is_empty(host):
-           host = request.client.host
-
+        host = get_client_host_from_request(request)
         user_agent = request.headers.get("User-Agent")
         referrer = request.headers.get("Referer", "None")
         vdate = datetime.now()

@@ -75,3 +75,11 @@ def is_after(date_before, date_after):
 
 def is_after_current_time(date):
     return is_after(time.strftime(_date_hour_format_iso, time.gmtime()), date)
+
+def is_expired(date_str):
+    if is_empty(date_str):
+        return False
+
+    current_date = datetime.now().date()
+    expiration_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    return current_date > expiration_date

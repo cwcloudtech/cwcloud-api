@@ -11,6 +11,20 @@ class ObjectSchema(BaseModel):
     name: str
     namespace: str
 
+class PodLogsSchema(BaseModel):
+    cluster_id: int
+    pod_name: str
+    namespace: str
+    container_name: Optional[str] = None
+    tail_lines: Optional[int] = 100
+    follow: Optional[bool] = False
+
+class PodTerminalSchema(BaseModel):
+    cluster_id: int
+    pod_name: str
+    namespace: str
+    container_name: Optional[str] = None
+
 class ExternalChart(BaseModel):
     name: str
     version: str

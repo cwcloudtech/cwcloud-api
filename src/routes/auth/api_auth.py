@@ -1,7 +1,7 @@
 import json
 
 from datetime import datetime
-from fastapi import Depends, APIRouter
+from fastapi import Request, Depends, APIRouter
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
@@ -20,6 +20,7 @@ from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
 from utils.observability.counter import create_counter, increment_counter
 from utils.observability.enums import Method
+from utils.observability.tracker import track_log
 
 router = APIRouter()
 CACHE_ADAPTER = get_adapter('cache')
@@ -28,12 +29,14 @@ _span_prefix = "login"
 _counter = create_counter("auth_api", "Auth API counter")
 
 @router.post("/login")
-def login_user(payload: UserLoginSchema, db: Session = Depends(get_db)):
+def login_user(request: Request, payload: UserLoginSchema, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
         from entities.User import User
         email = payload.email
         password = payload.password
+
+        track_log(request, "login_user", email)
 
         if not payload or not email or not password:
             return JSONResponse(content = {

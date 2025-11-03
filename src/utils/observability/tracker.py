@@ -5,7 +5,7 @@ import requests
 from user_agents import parse
 from PIL import Image
 
-from utils.common import get_env_int, is_empty, is_empty_key, is_response_ok
+from utils.common import get_env_int, is_empty, is_empty_key, is_not_empty, is_response_ok
 from utils.logger import log_msg
 
 TRACKER_IMAGE_PATH = os.getenv('TRACKER_IMAGE_PATH', "tracker_image.png")
@@ -22,6 +22,16 @@ def override_if_is_empty(payload, pkey, data, dkey = None):
         dkey = pkey
 
     return data.get(dkey, DEFAULT_VALUE) if is_empty_key(payload, pkey) or payload[pkey] == DEFAULT_VALUE else payload[pkey]
+
+def get_client_host_from_request(request):
+    host = request.headers.get("X-Real-IP")
+    if is_empty(host):
+        host = request.headers.get("X-Forwarded-For")
+
+    if is_empty(host):
+        host = request.client.host
+
+    return host
 
 def get_infos_from_ip(ip: str):
     try:
@@ -90,6 +100,13 @@ def get_infos_from_ip(ip: str):
         log_msg("WARN", "[get_infos_from_ip] unexpected error with ipinfo.io: ip = {}, e.type = {}, e.msg = {}".format(ip, type(e), e))
 
     return payload
+
+def track_log(request, function_name, email = "unknown"):
+    client_host = get_client_host_from_request(request)
+    client_infos = {}
+    if is_not_empty(client_host):
+        client_infos = get_infos_from_ip(client_host)
+    log_msg("INFO", f"[track][{function_name}] email = {email}, host = {client_host}, infos = {client_infos}")
 
 def parse_user_agent(user_agent):
     if is_empty(user_agent):

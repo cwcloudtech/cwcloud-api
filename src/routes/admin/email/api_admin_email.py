@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, APIRouter
+from fastapi import Request, Depends, APIRouter
 from fastapi.responses import JSONResponse
 
 from middleware.auth_guard import admin_required
@@ -14,6 +14,7 @@ from utils.observability.counter import create_counter, increment_counter
 from utils.observability.traces import span_format
 from utils.observability.enums import Method
 from utils.mail import EMAIL_ADAPTER, send_templated_email
+from utils.observability.tracker import track_log
 
 router = APIRouter()
 
@@ -21,7 +22,7 @@ _span_prefix = "adm-email"
 _counter = create_counter("adm_email_api", "Admin email API counter")
 
 @router.post("")
-def send_email(current_user: Annotated[UserSchema, Depends(admin_required)], payload: EmailAdminSchema):
+def send_email(request: Request, current_user: Annotated[UserSchema, Depends(admin_required)], payload: EmailAdminSchema):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
         if EMAIL_ADAPTER().is_disabled():
@@ -35,6 +36,7 @@ def send_email(current_user: Annotated[UserSchema, Depends(admin_required)], pay
             payload.from_ = current_user.email
 
         email = payload.model_dump(by_alias=True)
-        log_msg("DEBUG", "[api_admin_email] email = {}".format(email))
+        log_msg("INFO", "[api_admin_email] from = {}, user = {}".format(email, current_user.email))
+        track_log(request, "api_admin_email", current_user.email)
 
         return send_templated_email(email) if "templated" in email and is_true(email['templated']) else EMAIL_ADAPTER().send(email)

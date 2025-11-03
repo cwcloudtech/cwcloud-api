@@ -89,9 +89,14 @@ def invoke(payload, current_user, user_auth, db):
     new_invocation = InvocationEntity(**payload.dict())
     new_invocation_execution_trace = InvocationExecutionTraceEntity(**payload.dict())
     invoker_id = get_invoker_id(payload, current_user)
+    without_invoker = False
     if is_not_empty(invoker_id):
         new_invocation.invoker_id = invoker_id
         new_invocation_execution_trace.invoker_id = invoker_id
+    else:
+       without_invoker = True
+       new_invocation.invoker_id = function.owner_id
+       new_invocation_execution_trace.invoker_id = function.owner_id
 
     db.add(new_invocation)
     db.commit()
@@ -105,6 +110,9 @@ def invoke(payload, current_user, user_auth, db):
     invocation_id = new_invocation.id
     payload.content.user_auth = user_auth
     _pubsub_adapter().publish(CONSUMER_GROUP, CONSUMER_CHANNEL, {'id': "{}".format(invocation_id), **payload.dict()})
+
+    if without_invoker:
+        log_msg("INFO", f"[invoke] Invocation id = {new_invocation.id} without invoker, set the invoker as the owner of the function (user_id = {function.owner_id})")
 
     return {
         'status': 'ok',

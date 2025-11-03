@@ -26,10 +26,16 @@ class ListUserResponse(BaseModel):
 class UserRegisterSchema(BaseModel):
     email: str
     password: str
-    registration_number: Optional[str]
-    address: Optional[str]
-    company_name: Optional[str]
-    contact_info: Optional[str]
+    registration_number: Optional[str] = None
+    address: Optional[str] = None
+    company_name: Optional[str] = None
+    contact_info: Optional[str] = None
+
+class UserPaymentSchema(BaseModel):
+    status: str
+
+class UserPaymentMethodSchema(BaseModel):
+    payment_method: str
 
 class UserUpdatePasswordSchema(BaseModel):
     old_password: str
@@ -64,6 +70,7 @@ class EnabledFeatures(BaseModel):
     iotapi: Optional[bool] = False
     monitorapi: Optional[bool] = False
     storageapi: Optional[bool] = False
+    block: Optional[bool] = False
 
 class UserEmailUpdateSchema(BaseModel):
     email: str

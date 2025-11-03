@@ -105,7 +105,8 @@ class User(Base):
                 "daasapi": payload.enabled_features.daasapi,
                 "iotapi": payload.enabled_features.iotapi,
                 "monitorapi": payload.enabled_features.monitorapi,
-                "storageapi": payload.enabled_features.storageapi
+                "storageapi": payload.enabled_features.storageapi,
+                "block": payload.enabled_features.block
             }
         })
         db.commit()

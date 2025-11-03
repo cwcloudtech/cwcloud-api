@@ -4,8 +4,9 @@ import requests
 from jinja2 import Environment, FileSystemLoader, BaseLoader, select_autoescape
 
 from adapters.AdapterConfig import get_adapter
+from utils.common import get_src_path, is_empty, is_not_empty, is_empty_key, is_not_empty_key, AUTOESCAPE_EXTENSIONS, is_true
+from utils.json import compact, is_not_json
 from utils.command import get_script_output
-from utils.common import get_env_int, get_src_path, is_not_empty, is_empty_key, is_not_empty_key, AUTOESCAPE_EXTENSIONS, is_true
 from utils.faas.vars import FAAS_API_TOKEN, FAAS_API_URL
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.observability.otel import get_otel_tracer
@@ -91,7 +92,7 @@ async def handle(msg):
 
     if is_not_empty_key(payload['content'], 'args'):
       args = payload['content']['args']
-      if any(is_forbidden(arg['value']) for arg in args):
+      if any(is_not_json(arg['value']) and is_forbidden(arg['value']) for arg in args):
         error_invocation(invocation_id, payload, "forbidden argument(s) for the function {}".format(function_id))
         return
 
@@ -118,7 +119,7 @@ async def handle(msg):
           function_without_args_tpl="handle"
           args_separator=" "
 
-        handle_call = function_with_args_tpl.format(args_separator.join(["\"{}\"".format(item['value']) for item in payload['content']['args']])) if is_not_empty_key(payload['content'], 'args') else function_without_args_tpl
+        handle_call = function_with_args_tpl.format(args_separator.join(["\"{}\"".format(compact(item['value'], True)) for item in payload['content']['args']])) if is_not_empty_key(payload['content'], 'args') else function_without_args_tpl
 
         main_content = template.render(
           function_id=function_id,
@@ -131,17 +132,25 @@ async def handle(msg):
 
         env = Environment(loader=BaseLoader(), autoescape=select_autoescape(AUTOESCAPE_EXTENSIONS))
         template = env.from_string(main_content)
-        if is_user_authenticated(payload):
-          log_msg("DEBUG", "[consume][handle] user is authenticated, user_auth_key = {}, user_auth_value = {}".format(payload['content']['user_auth']['header_key'], payload['content']['user_auth']['header_value']))
-          main_content = template.render(
-            user_auth_key=payload['content']['user_auth']['header_key'] ,
-            user_auth_value=payload['content']['user_auth']['header_value'],
-            env=serverless_function['content']['env']
-          )
-        else:
-          main_content = template.render(
-            env=serverless_function['content']['env']
-          )
+
+        env = serverless_function['content']['env']
+        auth_header_key = env['AUTH_HEADER_KEY'] if is_not_empty_key(env, 'AUTH_HEADER_KEY') else "X-Auth-Token"
+        auth_header_value = env['AUTH_HEADER_VALUE'] if is_not_empty_key(env, 'AUTH_HEADER_VALUE') else None
+
+        if is_empty(auth_header_value) and is_user_authenticated(payload):
+          auth_header_key = payload['content']['user_auth']['header_key']
+          auth_header_value = payload['content']['user_auth']['header_value']
+
+        if is_empty(auth_header_value):
+          auth_header_key = "x-unauthenticated"
+          auth_header_value = "unauthenticated"
+
+        log_msg("DEBUG", f"[consume][handle] user_auth_key = {auth_header_key}, user_auth_value = {auth_header_value}")
+        main_content = template.render(
+          user_auth_key = auth_header_key,
+          user_auth_value = auth_header_value,
+          env = env
+        )
 
         function_file.write(main_content)
 

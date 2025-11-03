@@ -158,15 +158,16 @@ class TestAdminUser(TestCase):
         from schemas.User import UserAdminUpdateSchema, EnabledFeatures
         userId = 1
         enabled_features = EnabledFeatures(
-            without_vat= False,
-            auto_pay= False,
-            emailapi= False,
-            cwaiapi= False,
-            faasapi= False,
-            disable_emails= False,
-            k8sapi= False,
-            daasapi= False,
-            iotapi= False
+            without_vat = False,
+            auto_pay = False,
+            emailapi = False,
+            cwaiapi = False,
+            faasapi = False,
+            disable_emails = False,
+            k8sapi = False,
+            daasapi = False,
+            iotapi = False,
+            ban = False
         )
         payload = UserAdminUpdateSchema(
             email='john.doe@example.com', 

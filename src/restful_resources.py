@@ -26,7 +26,7 @@ def import_resources(app):
     from routes.provider import api_provider
     from routes.registry import api_registry
     from routes.support import api_support
-    from routes.faas import api_invocation, api_functions, api_languages, api_templates, api_trigger_kinds, api_trigger
+    from routes.faas import api_invocation, api_webhook as api_faas_webhook, api_functions, api_languages, api_templates, api_trigger_kinds, api_trigger
     from routes.config import api_config
     from routes.admin.user import api_admin_user
     from routes.admin.bucket import api_admin_bucket
@@ -52,6 +52,7 @@ def import_resources(app):
     from routes.tracker import api_tracker
     from routes.admin.monitor import api_admin_monitor
     from routes.admin.ai import api_admin_prompt
+    from routes.admin.ai import api_admin_adapter
     from routes.admin.storage import api_admin_kv
     
     version = os.getenv('API_VERSION', 'v1')
@@ -82,6 +83,7 @@ def import_resources(app):
     app.include_router(api_functions.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_templates.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_invocation.router, tags = ['FaaS'], prefix = f'/{version}/faas')
+    app.include_router(api_faas_webhook.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_trigger_kinds.router, tags = ['FaaS'], prefix = f'/{version}/faas')
     app.include_router(api_trigger.router, tags = ['Faas'], prefix = f'/{version}/faas')
     app.include_router(api_adapter.router, tags = ['AI'], prefix = f'/{version}/ai')
@@ -117,4 +119,5 @@ def import_resources(app):
     app.include_router(api_admin_support.router, tags = ['Admin Support Tickets'], prefix = f'/{version}/admin/support')
     app.include_router(api_admin_dns.router, tags = ['Admin DNS'], prefix = f'/{version}/admin/dns')
     app.include_router(api_admin_prompt.router, tags = ['Admin AI'], prefix = f'/{version}/admin/ai')
+    app.include_router(api_admin_adapter.router, tags = ['Admin AI'], prefix = f'/{version}/admin/ai')
     app.include_router(api_admin_kv.router, tags = ['Admin Storage'], prefix = f'/{version}/admin/storage/kv')

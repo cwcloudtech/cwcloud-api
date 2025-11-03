@@ -1,5 +1,4 @@
-from fastapi import Depends, APIRouter
-from fastapi.responses import JSONResponse
+from fastapi import Request, Depends, APIRouter
 from sqlalchemy.orm import Session
 from typing import Annotated
 
@@ -8,11 +7,11 @@ from database.postgres_db import get_db
 from middleware.auth_guard import get_current_active_user
 from controllers.user import confirm_user_account, confirmation_email, create_user_account, forget_password_email, get_current_user_data, get_user_cloud_resources, update_user_informations, update_user_password, user_reset_password, verify_user_token, get_user_cloud_statistics
 
-from utils.observability.cid import get_current_cid
 from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
 from utils.observability.counter import create_counter, increment_counter
 from utils.observability.enums import Action, Method
+from utils.observability.tracker import track_log
 
 router = APIRouter()
 
@@ -20,9 +19,10 @@ _span_prefix = "user"
 _counter = create_counter("user_api", "User password API counter")
 
 @router.post("")
-def create_user(payload: UserRegisterSchema, db: Session = Depends(get_db)):
+def create_user(request: Request, payload: UserRegisterSchema, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
+        track_log(request, "create_user", payload.email)
         return create_user_account(payload, db)
 
 @router.put("")
