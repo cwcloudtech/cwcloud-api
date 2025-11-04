@@ -44,7 +44,7 @@ def login_user(request: Request, payload: UserLoginSchema, db: Session = Depends
                 'error': 'Missing informations for login',
                 'i18n_code': 'missing_info_for_login',
                 'cid': get_current_cid()
-            }, status_code = 403)
+            }, status_code = 401)
 
         user = User.getUserByEmail(email, db)
         if not user:
@@ -54,7 +54,7 @@ def login_user(request: Request, payload: UserLoginSchema, db: Session = Depends
                 'error': 'Authentification failed',
                 'i18n_code': 'auth_failed',
                 'cid': get_current_cid()
-            }, status_code = 403)
+            }, status_code = 401)
 
         from entities.Mfa import Mfa
         mfaMethods = Mfa.getUserMfaMethods(user.id, db)
@@ -88,4 +88,4 @@ def login_user(request: Request, payload: UserLoginSchema, db: Session = Depends
             'error': 'Authentification failed',
             'i18n_code': 'auth_failed',
             'cid': get_current_cid()
-        }, status_code = 403)
+        }, status_code = 401)

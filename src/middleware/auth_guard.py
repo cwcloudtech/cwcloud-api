@@ -115,9 +115,11 @@ async def get_current_user(user_token: str = Depends(user_token_header), auth_to
 
 async def get_current_active_user(current_user: UserSchema = Depends(get_current_user)):
     if is_false(current_user.confirmed):
+        log_msg("WARN", f"[auth_guard] user {current_user.email} is trying to connect but he's not confirmed yet")
         raise CwHTTPException(message = {"status": "ko", "error": "your account has not been confirmed yet", "i18n_code": "account_not_confirmed", "cid": get_current_cid()}, status_code = status.HTTP_403_FORBIDDEN)
 
     if is_flag_enabled(current_user.enabled_features, 'block'):
+        log_msg("WARN", f"[auth_guard] user {current_user.email} is trying to connect but he's blocked")
         raise CwHTTPException(message = {"status": "ko", "error": "your account has been blocked", "i18n_code": "blocked_account", "cid": get_current_cid()}, status_code = status.HTTP_403_FORBIDDEN)
 
     return current_user
@@ -159,13 +161,13 @@ def _ws_x_auth(websocket: WebSocket) -> Optional[str]:
 async def _get_mem_user_token(user_token: str):
     decoded = jwt_decode(user_token)
     email: str = decoded.get("email")
-    log_msg("DEBUG", f"[auth_ws] decoded_user={decoded}")
+    log_msg("DEBUG", f"[auth_guard] decoded_user={decoded}")
     from adapters.AdapterConfig import get_adapter
     CACHE_ADAPTER = get_adapter('cache')
     return CACHE_ADAPTER().get(email), TokenData(email=email)
 
 async def get_current_user_ws(websocket: WebSocket, db: Session = Depends(get_db)) -> User:
-    log_msg("DEBUG", f"[auth_ws] headers={dict(websocket.headers)}")
+    log_msg("DEBUG", f"[auth_guard] headers={dict(websocket.headers)}")
     user_token = _ws_bearer(websocket) or _ws_x_user(websocket)
     auth_token = _ws_x_auth(websocket)
     proto_token, proto_to_echo = _ws_subprotocol_token(websocket)
