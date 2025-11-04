@@ -12,7 +12,7 @@ from database.postgres_db import get_db
 from utils.jwt import jwt_encode
 
 from utils.logger import log_msg
-from utils.common import get_env_int, verify_password
+from utils.common import get_env_int, is_false, verify_password
 from utils.flag import is_flag_enabled
 from utils.encoder import AlchemyEncoder
 from utils.observability.cid import get_current_cid
@@ -55,6 +55,24 @@ def login_user(request: Request, payload: UserLoginSchema, db: Session = Depends
                 'i18n_code': 'auth_failed',
                 'cid': get_current_cid()
             }, status_code = 401)
+
+        if is_false(user.confirmed):
+           log_msg("WARN", f"[login_user] user {user.email} is trying to connect but he's not confirmed yet")
+           return JSONResponse(content = {
+                'status': 'ko',
+                'error': 'your account has not been confirmed yet',
+                'i18n_code': 'account_not_confirmed',
+                'cid': get_current_cid()
+            }, status_code = 403)
+
+        if is_flag_enabled(user.enabled_features, 'block'):
+            log_msg("WARN", f"[login_user] user {user.email} is trying to connect but he's blocked")
+            return JSONResponse(content = {
+                'status': 'ko',
+                'error': 'your account has been blocked',
+                'i18n_code': 'blocked_account',
+                'cid': get_current_cid()
+            }, status_code = 403)
 
         from entities.Mfa import Mfa
         mfaMethods = Mfa.getUserMfaMethods(user.id, db)

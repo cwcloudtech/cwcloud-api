@@ -8,7 +8,7 @@ from datetime import datetime
 
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.observability.cid import get_current_cid
-from utils.common import get_env_bool, get_env_int, is_disabled, is_enabled
+from utils.common import get_env_bool, is_disabled, is_enabled
 
 SLACK_WEBHOOK_TPL = "https://hooks.slack.com/services/{}"
 DISCORD_WEBHOOK_TPL = "https://discord.com/api/webhooks/{}/slack"

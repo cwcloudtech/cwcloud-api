@@ -23,7 +23,7 @@ _span_prefix = "email"
 _counter = create_counter("email_api", "Email API counter")
 
 @router.post("")
-def send_emaili(request: Request, current_user: Annotated[UserSchema, Depends(get_current_active_user)], email_api: Annotated[str, Depends(emailapi_required)], payload: EmailSchema):
+def send_email(request: Request, current_user: Annotated[UserSchema, Depends(get_current_active_user)], email_api: Annotated[str, Depends(emailapi_required)], payload: EmailSchema):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
         if EMAIL_ADAPTER().is_disabled():
