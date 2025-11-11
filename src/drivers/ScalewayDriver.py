@@ -113,7 +113,7 @@ class ScalewayDriver(ProviderDriver):
         def create_pulumi_program():
             region_zone = "{}-{}".format(instance_region, instance_zone)
             instance_ip = scaleway.InstanceIp("publicIp", zone = region_zone)
-            new_instance = scaleway.InstanceServer(hashed_instance_name,
+            scaleway.InstanceServer(hashed_instance_name,
                 type = instance_type,
                 image = ami_image,
                 name = hashed_instance_name,
@@ -128,17 +128,17 @@ class ScalewayDriver(ProviderDriver):
                 dns_driver = get_dns_zone_driver(root_dns_zone)
                 ProviderDriverModule = importlib.import_module('drivers.{}'.format(dns_driver))
                 ProviderDriver = getattr(ProviderDriverModule, dns_driver)
-                ProviderDriver().create_dns_records(hashed_instance_name, environment, new_instance.public_ip, root_dns_zone)
-            pulumi.export("public_ip", new_instance.public_ip)
+                ProviderDriver().create_dns_records(hashed_instance_name, environment, instance_ip.address, root_dns_zone)
+            pulumi.export("public_ip", instance_ip.address)
 
         cloudflare_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
 
         stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
-        stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-        stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
-        stack.set_config("scaleway:project_id", auto.ConfigValue(SCW_PROJECT_ID))
+        stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+        stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
+        stack.set_config("scaleway:projectId", auto.ConfigValue(SCW_PROJECT_ID))
         if is_not_empty(cloudflare_api_token):
             stack.set_config("cloudflare:api_token", auto.ConfigValue(cloudflare_api_token))
         up_res = stack.up()
@@ -171,9 +171,9 @@ class ScalewayDriver(ProviderDriver):
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
 
-        stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-        stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
-        stack.set_config("scaleway:project_id", auto.ConfigValue(SCW_PROJECT_ID))
+        stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+        stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
+        stack.set_config("scaleway:projectId", auto.ConfigValue(SCW_PROJECT_ID))
         log_msg("DEBUG", "[ScalewayDriver] Refreshing instance {}".format(hashed_instance_name))
         up_res = stack.up()
 
@@ -192,8 +192,8 @@ class ScalewayDriver(ProviderDriver):
                                                 project_name = sanitize_project_name(user_email),
                                                 program = create_pulumi_program)
 
-            stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-            stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
+            stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+            stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
             log_msg("DEBUG", "[ScalewayDriver] Refreshing registry {}".format(hashed_registry_name))
             up_res = stack.up()
             return {
@@ -215,8 +215,8 @@ class ScalewayDriver(ProviderDriver):
                                                 project_name = sanitize_project_name(user_email),
                                                 program = create_pulumi_program)
 
-            stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-            stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
+            stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+            stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
             log_msg("DEBUG", "[ScalewayDriver] Refreshing bucket {}".format(hashed_bucket_name))
             up_res = stack.up()
             return {
@@ -270,9 +270,9 @@ class ScalewayDriver(ProviderDriver):
         stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
-        stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-        stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
-        stack.set_config("scaleway:project_id", auto.ConfigValue(SCW_PROJECT_ID))
+        stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+        stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
+        stack.set_config("scaleway:projectId", auto.ConfigValue(SCW_PROJECT_ID))
         up_res = stack.up()
 
         return {
@@ -303,9 +303,9 @@ class ScalewayDriver(ProviderDriver):
         stack = auto.create_or_select_stack(stack_name = hashed_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
-        stack.set_config("scaleway:access_key", auto.ConfigValue(SCW_ACCESS_KEY))
-        stack.set_config("scaleway:secret_key", auto.ConfigValue(SCW_SECRET_KEY))
-        stack.set_config("scaleway:project_id", auto.ConfigValue(SCW_PROJECT_ID))
+        stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
+        stack.set_config("scaleway:secretKey", auto.ConfigValue(SCW_SECRET_KEY))
+        stack.set_config("scaleway:projectId", auto.ConfigValue(SCW_PROJECT_ID))
         up_res = stack.up()
 
         return {
