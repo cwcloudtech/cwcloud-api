@@ -14,6 +14,9 @@ EMAIL_ACCOUNTING = os.getenv('EMAIL_ACCOUNTING') if is_not_empty(os.getenv('EMAI
 EMAIL_ADAPTER = get_adapter("emails")
 DEFAULT_EMAIL_ADAPTER = get_default_adapter("emails")
 
+_CONTACT_COPYRIGHT_NAME_FOOTER = os.getenv('CONTACT_COPYRIGHT_NAME_FOOTER', 'CWCloud')
+_CONTACT_FOOTER_LOGO = os.getenv('CONTACT_FOOTER_LOGO', 'https://assets.cwcloud.tech/assets/logos/cwcloud-gold.png')
+
 current_year = datetime.now().year
 
 def send_email_with_chosen_template(receiver_email, activateLink, subject, template):
@@ -22,8 +25,11 @@ def send_email_with_chosen_template(receiver_email, activateLink, subject, templ
 
     content = template.render(
         activateLink = activateLink,
-        currentYear = current_year
+        currentYear = current_year,
+        copyrigth_name_footer = _CONTACT_COPYRIGHT_NAME_FOOTER,
+        contact_footer_logo = _CONTACT_FOOTER_LOGO
     )
+
     log_msg("INFO", "[send_email] Send from = {}, to = {}, content = {}".format(EMAIL_EXPEDITOR, receiver_email, activateLink))
     return EMAIL_ADAPTER().send({
         'from': EMAIL_EXPEDITOR,
@@ -98,8 +104,11 @@ def send_forget_password_email(receiver_email, activateLink, subject):
     template = env.get_template('forget_password_mail.j2')
     content = template.render(
         activateLink = activateLink,
-        currentYear = current_year
+        currentYear = current_year,
+        copyrigth_name_footer = _CONTACT_COPYRIGHT_NAME_FOOTER,
+        contact_footer_logo = _CONTACT_FOOTER_LOGO
     )
+
     log_msg("INFO", "[send_email] Send from = {}, to = {}, link = {}".format(EMAIL_EXPEDITOR, receiver_email, activateLink))
     return EMAIL_ADAPTER().send({
         'from': EMAIL_EXPEDITOR,
@@ -131,25 +140,32 @@ def send_email(receiver_email, body, subject):
         'subject': subject
     })
 
-def send_contact_email(from_email, receiver_email, body, subject):
+def send_contact_email(email, receiver_email, body, subject):
+    return send_contact_form_request(EMAIL_EXPEDITOR, email, receiver_email, body, subject, _CONTACT_COPYRIGHT_NAME_FOOTER, _CONTACT_FOOTER_LOGO)
+
+def send_contact_form_request(from_email, reply_to, to_email, body, subject, copyright_name, logo_url):
     if EMAIL_ADAPTER().is_disabled():
         return {}
 
     file_loader = FileSystemLoader(str(Path(__file__).resolve().parents[1]) + '/templates')
     env = Environment(loader=file_loader, autoescape=select_autoescape(AUTOESCAPE_EXTENSIONS))
     template = env.get_template('email.j2')
+
     content = template.render(
         body = body,
         title = subject,
-        currentYear = current_year
+        currentYear = current_year,
+        copyrigth_name_footer = copyright_name,
+        contact_footer_logo = logo_url
     )
 
-    log_msg("INFO", "[send_contact_email] Send from = {}, to = {}, content = {}".format(from_email, receiver_email, body))
+    log_msg("INFO", "[send_contact_email] Send from = {}, to = {}, reply_to = {}, content = {}".format(from_email, to_email, reply_to, body))
     return EMAIL_ADAPTER().send({
         'from': from_email,
-        'to': receiver_email,
+        'reply_to': reply_to,
+        'to': to_email,
         'content': content,
-        'subject': subject
+        'subject': f"CWCloud's contact form: {subject}"
     })
 
 def send_create_instance_email(user_email, project_repo_url, instance_name, environment, access_password, root_dns_zone):

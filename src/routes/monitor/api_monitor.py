@@ -23,25 +23,25 @@ def get_all_monitors(current_user: Annotated[UserSchema, Depends(monitorapi_requ
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET)):
         increment_counter(_counter, Method.GET)
         return get_monitors(current_user, db, family)
-    
+
 @router.get("/{monitor_id}")
 def get_monitor_by_id(current_user: Annotated[UserSchema, Depends(monitorapi_required)], monitor_id: str, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET)):
         increment_counter(_counter, Method.GET)
         return get_monitor(current_user, monitor_id, db)
-    
+
 @router.post("")
 def create_monitor(current_user: Annotated[UserSchema, Depends(monitorapi_required)], payload: MonitorSchema, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
         return add_monitor(current_user, payload, db)
-    
+
 @router.put("/{monitor_id}")
 def update_monitor_by_id(current_user: Annotated[UserSchema, Depends(monitorapi_required)], monitor_id: str, payload: MonitorSchema, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.PUT)):
         increment_counter(_counter, Method.PUT)
         return update_monitor(current_user, monitor_id, payload, db)
-    
+
 @router.delete("/{monitor_id}")
 def delete_monitor(current_user: Annotated[UserSchema, Depends(monitorapi_required)], monitor_id: str, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.DELETE)):

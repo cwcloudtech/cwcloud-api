@@ -14,6 +14,7 @@ def import_resources(app):
     from routes.api_keys import api_keys
     from routes.bucket import api_bucket
     from routes.contact import api_contact
+    from routes.contact_form import api_contact_form
     from routes.control import api_control
     from routes.dns_zones import api_dns_zones
     from routes.email import api_email
@@ -50,6 +51,7 @@ def import_resources(app):
     from routes.admin.dns import api_admin_dns
     from routes.monitor import api_monitor
     from routes.tracker import api_tracker
+    from routes.admin.contact_form import api_admin_contact_form
     from routes.admin.monitor import api_admin_monitor
     from routes.admin.ai import api_admin_prompt
     from routes.admin.ai import api_admin_adapter
@@ -95,6 +97,7 @@ def import_resources(app):
     app.include_router(api_kv.router, tags = ['Storage'], prefix = f'/{version}/storage/kv')
     app.include_router(api_monitor.router, tags = ['Observability'], prefix = f'/{version}/monitor')
     app.include_router(api_tracker.router, tags = ['Observability'], prefix = f'/{version}/tracker')
+    app.include_router(api_contact_form.router, tags = ['Contact forms'], prefix = f'/{version}/contactform')
     app.include_router(api_contact.router, tags = ['Contact and Support'], prefix = f'/{version}/contact')
     app.include_router(api_support.router, tags = ['Contact and Support'], prefix = f'/{version}/support')
     app.include_router(api_pricing.router, tags = ['Pricing'])
@@ -115,6 +118,7 @@ def import_resources(app):
     app.include_router(api_admin_device.router, tags = ['Admin IoT'], prefix = f'/{version}/admin/iot')
     app.include_router(api_admin_data.router, tags = ['Admin IoT'], prefix = f'/{version}/admin/iot')
     app.include_router(api_admin_monitor.router, tags = ['Admin Monitor'], prefix = f'/{version}/admin/monitor')
+    app.include_router(api_admin_contact_form.router, tags = ['Admin Contact Form'], prefix = f'/{version}/admin/contactform')
     app.include_router(api_admin_email.router, tags = ['Admin Email'], prefix = f'/{version}/admin/email')
     app.include_router(api_admin_support.router, tags = ['Admin Support Tickets'], prefix = f'/{version}/admin/support')
     app.include_router(api_admin_dns.router, tags = ['Admin DNS'], prefix = f'/{version}/admin/dns')

@@ -1,0 +1,20 @@
+from typing import Optional
+from pydantic import BaseModel
+
+class ContactFormSchema(BaseModel):
+    id: str
+    mail_from: str
+    mail_to: str
+    copyright_name: Optional[str]
+    logo_url: Optional[str]
+
+class AdminContactFormSchema(ContactFormSchema):
+    user_id: str
+
+class ContactFormRequestSchema(BaseModel):
+    id: str
+    email: str
+    subject: str
+    message: str
+    name: Optional[str]
+    surname: Optional[str]

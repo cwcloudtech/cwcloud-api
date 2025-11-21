@@ -27,8 +27,7 @@ def get_monitor(monitor_id, db):
     return monitor
 
 def add_monitor(payload, db):
-    try:
-        
+    try: 
         if payload.type == 'tcp' and not_match_tcp_url_format(payload.url):
             return JSONResponse(content = {
                 'status': 'ko',
@@ -67,7 +66,7 @@ def add_monitor(payload, db):
             'message': e.detail,
             'cid': get_current_cid()
         }, status_code = e.status_code)
-        
+
 def update_monitor(monitor_id, payload, db):
     monitor = Monitor.findMonitorById(monitor_id, db)
     if not monitor:
@@ -77,7 +76,7 @@ def update_monitor(monitor_id, payload, db):
             'i18n_code': 'monitor_not_found',
             'cid': get_current_cid()
         }, status_code = 404)
-        
+
     if payload.type == 'tcp' and not_match_tcp_url_format(payload.url):
             return JSONResponse(content = {
                 'status': 'ko',
@@ -85,7 +84,7 @@ def update_monitor(monitor_id, payload, db):
                 'i18n_code': 'invalid_tcp_url_format',
                 'cid': get_current_cid()
             }, status_code = 400)
-        
+
     if payload.type == 'http' and is_not_http_status_code(payload.expected_http_code):
         return JSONResponse(content = {
             'status': 'ko',
@@ -93,12 +92,12 @@ def update_monitor(monitor_id, payload, db):
             'i18n_code': 'invalid_http_status_code',
             'cid': get_current_cid()
         }, status_code = 400)
-        
+
     # ? temporary procedure for old monitors with null hash
     if is_empty(monitor.hash):
         _, hash = monitor.name.rsplit('-', 1)
         monitor.hash = hash
-        
+
     payload.name = "{}-{}".format(payload.name, monitor.hash)
     Monitor.adminUpdateInfo(payload, monitor_id, db)
 
@@ -108,7 +107,7 @@ def update_monitor(monitor_id, payload, db):
         'id': monitor_id,
         'i18n_code': 'monitor_updated'
     })
-    
+
 def remove_monitor(monitor_id, db):
     monitor = Monitor.findMonitorById(monitor_id, db)
     if not monitor:
@@ -118,9 +117,9 @@ def remove_monitor(monitor_id, db):
             'i18n_code': 'monitor_not_found',
             'cid': get_current_cid()
         }, status_code = 404)
-    
+
     Monitor.deleteMonitor(monitor_id, db)
-    
+
     return JSONResponse(content = {
         'status': 'ok',
         'message': 'Monitor successfully deleted',
