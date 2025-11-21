@@ -10,6 +10,7 @@ from controllers.contact_form import get_all_forms, get_form_by_id, get_form_by_
 from database.postgres_db import get_db
 
 from utils.common import is_empty, is_not_empty
+from utils.api_url import get_api_url
 from utils.mail import send_contact_form_request
 from utils.observability.tracker import get_client_host_from_request
 from utils.security import is_not_email_valid
@@ -89,11 +90,13 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
 
         body = "This email is from the following expeditor:" \
         "<ul>" \
-        f"<li><b>Email: </b>{email}</li>" \
-        f"<li><b>Name: </b>{payload.name}</li>" if is_not_empty(payload.name) else "" \
-        f"<li><b>Surname: </b>{payload.surname}</li>" if is_not_empty(payload.surname) else "" \
-        f"<li><b>Host: </b>{get_client_host_from_request(request)}</li>" \
-        f"<li><b>Object: </b>{subject}</li>" \
+        f"<li><b>Email:</b> {email}</li>" \
+        f"<li><b>Name: </b> {payload.name}</li>" if is_not_empty(payload.name) else "" \
+        f"<li><b>Surname:</b> {payload.surname}</li>" if is_not_empty(payload.surname) else "" \
+        f"<li><b>Host:</b> {get_client_host_from_request(request)}</li>" \
+        f"<li><b>Api env:</b> {get_api_url()}</li>" \
+        f"<li><b>Form:</b> {form.id} / {form.name}</li>" \
+        f"<li><b>Object:</b> {subject}</li>" \
         f"</ul><br /><hr />{message}"
 
         send_contact_form_request(form.to_email, email, form.to_email, body, subject, form.copyright_name, form.logo_url)
