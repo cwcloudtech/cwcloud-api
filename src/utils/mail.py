@@ -159,10 +159,10 @@ def send_contact_form_request(from_email, reply_to, to_email, body, subject, cop
         contact_footer_logo = logo_url
     )
 
-    log_msg("INFO", "[send_contact_email] Send from = {}, to = {}, reply_to = {}, content = {}".format(from_email, to_email, reply_to, body))
+    log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, content = {}".format(from_email, to_email, reply_to, body))
     return EMAIL_ADAPTER().send({
         'from': from_email,
-        'reply_to': reply_to,
+        'replyto': reply_to,
         'to': to_email,
         'content': content,
         'subject': f"CWCloud's contact form: {subject}"
