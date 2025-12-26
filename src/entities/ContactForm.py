@@ -53,6 +53,6 @@ class ContactForm(Base):
         db.commit()
 
     @staticmethod
-    def updateInfo(contact_form_id, mail_from, mail_to, copyright_name, logo_url, db):
-        db.query(ContactForm).filter(ContactForm.id == contact_form_id).update({"mail_from": mail_from, "mail_to": mail_to, "copyright_name": copyright_name, "logo_url": logo_url})
+    def updateInfo(contact_form_id, name, mail_from, mail_to, copyright_name, logo_url, db):
+        db.query(ContactForm).filter(ContactForm.id == contact_form_id).update({"name": name, "mail_from": mail_from, "mail_to": mail_to, "copyright_name": copyright_name, "logo_url": logo_url})
         db.commit()

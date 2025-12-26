@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 class ContactFormSchema(BaseModel):
-    id: str
+    name: str
     mail_from: str
     mail_to: str
     copyright_name: Optional[str]

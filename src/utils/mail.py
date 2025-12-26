@@ -143,7 +143,7 @@ def send_email(receiver_email, body, subject):
 def send_contact_email(email, receiver_email, body, subject):
     return send_contact_form_request(EMAIL_EXPEDITOR, email, receiver_email, body, subject, _CONTACT_COPYRIGHT_NAME_FOOTER, _CONTACT_FOOTER_LOGO)
 
-def send_contact_form_request(from_email, reply_to, to_email, body, subject, copyright_name, logo_url):
+def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyright_name, logo_url):
     if EMAIL_ADAPTER().is_disabled():
         return {}
 
@@ -159,11 +159,11 @@ def send_contact_form_request(from_email, reply_to, to_email, body, subject, cop
         contact_footer_logo = logo_url
     )
 
-    log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, content = {}".format(from_email, to_email, reply_to, body))
+    log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, content = {}".format(mail_from, mail_to, reply_to, body))
     return EMAIL_ADAPTER().send({
-        'from': from_email,
+        'from': mail_from,
         'replyto': reply_to,
-        'to': to_email,
+        'to': mail_to,
         'content': content,
         'subject': f"CWCloud's contact form: {subject}"
     })

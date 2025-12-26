@@ -14,7 +14,7 @@ def import_resources(app):
     from routes.api_keys import api_keys
     from routes.bucket import api_bucket
     from routes.contact import api_contact
-    from routes.contact_form import api_contact_form
+    from routes.contact_form import api_contact_form, api_contact_request
     from routes.control import api_control
     from routes.dns_zones import api_dns_zones
     from routes.email import api_email
@@ -98,6 +98,7 @@ def import_resources(app):
     app.include_router(api_monitor.router, tags = ['Observability'], prefix = f'/{version}/monitor')
     app.include_router(api_tracker.router, tags = ['Observability'], prefix = f'/{version}/tracker')
     app.include_router(api_contact_form.router, tags = ['Contact forms'], prefix = f'/{version}/contactform')
+    app.include_router(api_contact_request.router, tags = ['Contact forms'], prefix = f'/{version}/contactreq')
     app.include_router(api_contact.router, tags = ['Contact and Support'], prefix = f'/{version}/contact')
     app.include_router(api_support.router, tags = ['Contact and Support'], prefix = f'/{version}/support')
     app.include_router(api_pricing.router, tags = ['Pricing'])
