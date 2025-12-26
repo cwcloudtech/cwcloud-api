@@ -16,5 +16,5 @@ class ContactFormRequestSchema(BaseModel):
     email: str
     subject: str
     message: str
+    firstname: Optional[str]
     name: Optional[str]
-    surname: Optional[str]

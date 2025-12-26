@@ -59,15 +59,15 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
         if is_not_empty(payload.name):
            opt_name = f"<li><b>Name: </b> {payload.name}</li>"
 
-        opt_surname = ""
-        if is_not_empty(payload.surname):
-           opt_surname = f"<li><b>Surname:</b> {payload.surname}</li>"
+        opt_firstname = ""
+        if is_not_empty(payload.firstname):
+           opt_firstname = f"<li><b>First name:</b> {payload.firstname}</li>"
 
         body = "This email is from the following expeditor:" \
         "<ul>" \
         f"<li><b>Email:</b> {email}</li>" \
+        f"{opt_firstname}" \
         f"{opt_name}" \
-        f"{opt_surname}" \
         f"<li><b>Host:</b> {get_client_host_from_request(request)}</li>" \
         f"<li><b>Api env:</b> {get_api_url()}</li>" \
         f"<li><b>Form:</b> {form.id} / {form.name}</li>" \
