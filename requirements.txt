@@ -26,7 +26,6 @@ stripe>=11.5.0, <12.0.0
 pyotp>=0.84
 yubico-client>=1.13.0
 sendgrid>=6.11.0, <7.0.0
-pdfkit>=1.0.0, <2.0.0
 minio>=7.2.15, <8.0.0
 python-dotenv>=1.0.1, <2.0.0
 boto3>=1.36.16, <2.0.0
