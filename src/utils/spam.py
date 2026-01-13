@@ -54,12 +54,12 @@ def looks_like_gibberish(text: str) -> bool:
     # Not enough space => random token
     space_ratio = t.count(" ") / max(1, n)
     if space_ratio < 0.03 and n > 20:
-        return True, "giberrish"
+        return True, "gibberish"
 
     # Alnum ration too high, not enough punctuation
     alnum_ratio = sum(ch.isalnum() for ch in t) / n
     if alnum_ratio > 0.92 and " " not in t:
-        return True, "giberrish"
+        return True, "gibberish"
 
     # FR/EN: au moins quelques voyelles si texte latin
     # FR/EN: at least few vowels
@@ -68,17 +68,17 @@ def looks_like_gibberish(text: str) -> bool:
     if has_latin and not has_arabic:
         vowels = sum(ch.lower() in "aeiouy" for ch in t)
         if vowels / max(1, sum(ch.isalpha() for ch in t)) < 0.20:
-            return True, "giberrish"
+            return True, "gibberish"
 
     # High entropy => often random (needs adjusting)
     ent = shannon_entropy(t)
     if ent > 4.3 and n > 25:
-        return True, "giberrish"
+        return True, "gibberish"
 
     # Too many repetitions of the same characteristic
     most_common = Counter(t).most_common(1)[0][1] / n
     if most_common > 0.35:
-        return True, "giberrish"
+        return True, "gibberish"
 
     return False, "message_acceptable"
 
