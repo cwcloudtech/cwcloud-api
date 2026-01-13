@@ -6,7 +6,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from adapters.AdapterConfig import get_adapter, get_default_adapter
 
-from utils.common import is_false, is_not_empty, AUTOESCAPE_EXTENSIONS
+from utils.api_url import get_api_url
+from utils.common import is_false, is_not_empty, is_not_empty_key, AUTOESCAPE_EXTENSIONS
 from utils.spam import is_message_acceptable
 from utils.logger import log_msg
 from utils.observability.cid import get_current_cid
@@ -152,11 +153,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
             'response': 'Email third part is disabled'
         }
 
-    file_loader = FileSystemLoader(str(Path(__file__).resolve().parents[1]) + '/templates')
-    env = Environment(loader=file_loader, autoescape=select_autoescape(AUTOESCAPE_EXTENSIONS))
-    template = env.get_template('email.j2')
-
-    is_acceptable, i18n_code = is_message_acceptable(body)
+    is_acceptable, i18n_code = is_message_acceptable(body['message'])
     if is_false(is_acceptable):
         log_msg("ERROR", "[send_contact_form_request] Content looks like spam: from = {}, to = {}, content = {}".format(mail_from, mail_to, body))
         return {
@@ -166,20 +163,36 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
             'error': 'Body is detected as spam',
             'cid': get_current_cid()
         }
-    
-    is_acceptable, i18n_code = is_message_acceptable(subject)
-    if is_false(is_acceptable):
-        log_msg("ERROR", "[send_contact_form_request] Subject looks like spam: from = {}, to = {}, subject = {}".format(mail_from, mail_to, subject))
-        return {
-            'status': 'ko',
-            'i18n_code': i18n_code,
-            'http_code': 400,
-            'error': 'Subject is detected as spam',
-            'cid': get_current_cid()
-        }
+
+    file_loader = FileSystemLoader(str(Path(__file__).resolve().parents[1]) + '/templates')
+    env = Environment(loader=file_loader, autoescape=select_autoescape(AUTOESCAPE_EXTENSIONS))
+    template = env.get_template('email.j2')
+
+    opt_name = ""
+    if is_not_empty_key(body, 'name'):
+        opt_name = f"<li><b>Name:</b> {body['name']}</li>"
+
+    opt_firstname = ""
+    if is_not_empty_key(body, 'firstname'):
+        opt_firstname = f"<li><b>First name:</b> {body['firstname']}</li>"
+
+    opt_form = ""
+    if is_not_empty_key(body, 'form_id') and is_not_empty_key(body, 'form_name'):
+        opt_form = f"<li><b>Form:</b> {body['form_id']} / {body['form_name']}</li>"
+
+    html = "This email is from the following expeditor:" \
+        "<ul>" \
+        f"<li><b>Email:</b> {mail_from}</li>" \
+        f"{opt_firstname}" \
+        f"{opt_name}" \
+        f"<li><b>Host:</b> {body['host']}</li>" \
+        f"<li><b>Api env:</b> {get_api_url()}</li>" \
+        f"{opt_form}" \
+        f"<li><b>Object:</b> {subject}</li>" \
+        f"</ul><br /><hr />{body['message']}"
 
     content = template.render(
-        body = body,
+        body = html,
         title = subject,
         currentYear = current_year,
         copyrigth_name_footer = copyright_name,

@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from schemas.Contact import ContactSchema
 
 from utils.common import is_empty, is_false
-from utils.api_url import get_api_url
 from utils.mail import EMAIL_EXPEDITOR, send_contact_email
 from utils.security import is_not_email_valid
 from utils.observability.tracker import get_client_host_from_request
@@ -47,13 +46,10 @@ def contact_with_us(request: Request, payload: ContactSchema):
                 'cid': get_current_cid()
             }, status_code = 400)
 
-        body = "This email is from the following expeditor:" \
-        "<ul>" \
-        f"<li><b>Email:</b> {email}</li>" \
-        f"<li><b>Host:</b> {get_client_host_from_request(request)}</li>" \
-        f"<li><b>Api env:</b> {get_api_url()}</li>" \
-        f"<li><b>Object:</b> {subject}</li>" \
-        f"</ul><br /><hr />{message}"
+        body = {
+            'message': message,
+            'host': get_client_host_from_request(request)
+        }
 
         result = send_contact_email(email, RECEIVER_CONTACTS_EMAIL, body, subject)
         if is_false(result['status']):

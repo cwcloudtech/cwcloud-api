@@ -6,8 +6,7 @@ from schemas.ContactForm import ContactFormRequestSchema
 from controllers.contact_form import get_form_by_id
 from database.postgres_db import get_db
 
-from utils.common import is_empty, is_false, is_not_empty
-from utils.api_url import get_api_url
+from utils.common import is_empty, is_false
 from utils.mail import send_contact_form_request
 from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
@@ -55,24 +54,14 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
                 'cid': get_current_cid()
             }, status_code = 400)
 
-        opt_name = ""
-        if is_not_empty(payload.name):
-           opt_name = f"<li><b>Name: </b> {payload.name}</li>"
-
-        opt_firstname = ""
-        if is_not_empty(payload.firstname):
-           opt_firstname = f"<li><b>First name:</b> {payload.firstname}</li>"
-
-        body = "This email is from the following expeditor:" \
-        "<ul>" \
-        f"<li><b>Email:</b> {email}</li>" \
-        f"{opt_firstname}" \
-        f"{opt_name}" \
-        f"<li><b>Host:</b> {get_client_host_from_request(request)}</li>" \
-        f"<li><b>Api env:</b> {get_api_url()}</li>" \
-        f"<li><b>Form:</b> {form.id} / {form.name}</li>" \
-        f"<li><b>Object:</b> {subject}</li>" \
-        f"</ul><br /><hr />{message}"
+        body = {
+            'message': message,
+            'host': get_client_host_from_request(request),
+            'name': payload.name,
+            'firstname': payload.firstname,
+            'form_id': form.id,
+            'form_name': form.name
+        }
 
         result = send_contact_form_request(form.mail_from, email, form.mail_to, body, subject, form.copyright_name, form.logo_url)
         if is_false(result['status']):
