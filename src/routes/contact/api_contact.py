@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from schemas.Contact import ContactSchema
 
-from utils.common import is_empty
+from utils.common import is_empty, is_false
 from utils.api_url import get_api_url
 from utils.mail import EMAIL_EXPEDITOR, send_contact_email
 from utils.security import is_not_email_valid
@@ -55,7 +55,14 @@ def contact_with_us(request: Request, payload: ContactSchema):
         f"<li><b>Object:</b> {subject}</li>" \
         f"</ul><br /><hr />{message}"
 
-        send_contact_email(email, RECEIVER_CONTACTS_EMAIL, body, subject)
+        result = send_contact_email(email, RECEIVER_CONTACTS_EMAIL, body, subject)
+        if is_false(result['status']):
+            return JSONResponse(content = {
+                'status': 'ko',
+                'error': result['error'],
+                'i18n_code': result['i18n_code'],
+                'cid': result['cid']
+            }, status_code = result['http_code'])
         return JSONResponse(content = {
             'status': 'ok',
             'message': 'successfully sent contact email'

@@ -22,5 +22,5 @@ class LogAdapter(EmailAdapter):
         return {
             'status': 'ok',
             'adapter': 'log',
-            'response': ''
+            'message': ''
         }

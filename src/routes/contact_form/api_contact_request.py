@@ -6,7 +6,7 @@ from schemas.ContactForm import ContactFormRequestSchema
 from controllers.contact_form import get_form_by_id
 from database.postgres_db import get_db
 
-from utils.common import is_empty, is_not_empty
+from utils.common import is_empty, is_false, is_not_empty
 from utils.api_url import get_api_url
 from utils.mail import send_contact_form_request
 from utils.observability.otel import get_otel_tracer
@@ -74,8 +74,16 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
         f"<li><b>Object:</b> {subject}</li>" \
         f"</ul><br /><hr />{message}"
 
-        send_contact_form_request(form.mail_from, email, form.mail_to, body, subject, form.copyright_name, form.logo_url)
-        return JSONResponse(content = {
-            'status': 'ok',
-            'message': 'successfully sent contact email'
-        }, status_code = 200)
+        result = send_contact_form_request(form.mail_from, email, form.mail_to, body, subject, form.copyright_name, form.logo_url)
+        if is_false(result['status']):
+            return JSONResponse(content = {
+                'status': 'ko',
+                'error': result['error'],
+                'i18n_code': result['i18n_code'],
+                'cid': result['cid']
+            }, status_code = result['http_code'])
+        else:
+            return JSONResponse(content = {
+                'status': 'ok',
+                'message': 'successfully sent contact email'
+            }, status_code = 200)

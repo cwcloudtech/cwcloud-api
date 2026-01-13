@@ -6,8 +6,10 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from adapters.AdapterConfig import get_adapter, get_default_adapter
 
-from utils.common import is_not_empty, AUTOESCAPE_EXTENSIONS
+from utils.common import is_false, is_not_empty, AUTOESCAPE_EXTENSIONS
+from utils.spam import is_message_acceptable
 from utils.logger import log_msg
+from utils.observability.cid import get_current_cid
 
 EMAIL_EXPEDITOR = os.getenv('EMAIL_EXPEDITOR', 'cloud@changeit.com')
 EMAIL_ACCOUNTING = os.getenv('EMAIL_ACCOUNTING') if is_not_empty(os.getenv('EMAIL_ACCOUNTING')) else EMAIL_EXPEDITOR
@@ -145,11 +147,36 @@ def send_contact_email(email, receiver_email, body, subject):
 
 def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyright_name, logo_url):
     if EMAIL_ADAPTER().is_disabled():
-        return {}
+        return {
+            'status': 'ok',
+            'response': 'Email third part is disabled'
+        }
 
     file_loader = FileSystemLoader(str(Path(__file__).resolve().parents[1]) + '/templates')
     env = Environment(loader=file_loader, autoescape=select_autoescape(AUTOESCAPE_EXTENSIONS))
     template = env.get_template('email.j2')
+
+    is_acceptable, i18n_code = is_message_acceptable(body)
+    if is_false(is_acceptable):
+        log_msg("ERROR", "[send_contact_form_request] Content looks like spam: from = {}, to = {}, content = {}".format(mail_from, mail_to, body))
+        return {
+            'status': 'ko',
+            'i18n_code': i18n_code,
+            'http_code': 400,
+            'error': 'Body is detected as spam',
+            'cid': get_current_cid()
+        }
+    
+    is_acceptable, i18n_code = is_message_acceptable(subject)
+    if is_false(is_acceptable):
+        log_msg("ERROR", "[send_contact_form_request] Subject looks like spam: from = {}, to = {}, subject = {}".format(mail_from, mail_to, subject))
+        return {
+            'status': 'ko',
+            'i18n_code': i18n_code,
+            'http_code': 400,
+            'error': 'Subject is detected as spam',
+            'cid': get_current_cid()
+        }
 
     content = template.render(
         body = body,
@@ -159,7 +186,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
         contact_footer_logo = logo_url
     )
 
-    log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, content = {}".format(mail_from, mail_to, reply_to, body))
+    log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, subject = {}, content = {}".format(mail_from, mail_to, reply_to, subject, body))
     return EMAIL_ADAPTER().send({
         'from': mail_from,
         'replyto': reply_to,
