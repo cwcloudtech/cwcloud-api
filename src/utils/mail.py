@@ -156,7 +156,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
         }
 
     key_cf_ttl = f"cf_{body['host']}"
-    if is_not_empty(_CACHE_ADAPTER.get(key_cf_ttl)):
+    if is_not_empty(_CACHE_ADAPTER().get(key_cf_ttl)):
         log_msg("WARN", "[send_contact_form_request] Sender exceed rate limiting (max = {} seconds): from = {}, host = {}, to = {}, content = {}".format(_TTL_CONTACT_FORM, mail_from, body['host'], mail_to, body))
         return {
             'status': 'ko',
