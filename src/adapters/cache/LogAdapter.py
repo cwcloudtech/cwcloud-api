@@ -6,8 +6,8 @@ class LogAdapter(CacheAdapter):
         log_msg("INFO", "[cache][LogAdapater][get] key = {}".format(key))
         return None
 
-    def put(self, key, value, ttl):
-        log_msg("INFO", "[cache][LogAdapater][put] key = {}, value = {}, ttl = {}".format(key, value, ttl))
+    def put(self, key, value, ttl, unit = "hours"):
+        log_msg("INFO", "[cache][LogAdapater][put] key = {}, value = {}, ttl = {}, unit = {}".format(key, value, ttl, unit))
     
     def delete(self, key):
         log_msg("INFO", "[cache][LogAdapater][delete] key = {}".format(key))

@@ -17,6 +17,8 @@ EMAIL_ACCOUNTING = os.getenv('EMAIL_ACCOUNTING') if is_not_empty(os.getenv('EMAI
 EMAIL_ADAPTER = get_adapter("emails")
 DEFAULT_EMAIL_ADAPTER = get_default_adapter("emails")
 
+_CACHE_ADAPTER = get_adapter('cache')
+_TTL_CONTACT_FORM = int(os.getenv('TTL_CONTACT_FORM', 30))
 _CONTACT_COPYRIGHT_NAME_FOOTER = os.getenv('CONTACT_COPYRIGHT_NAME_FOOTER', 'CWCloud')
 _CONTACT_FOOTER_LOGO = os.getenv('CONTACT_FOOTER_LOGO', 'https://assets.cwcloud.tech/assets/logos/cwcloud-gold.png')
 
@@ -153,9 +155,21 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
             'response': 'Email third part is disabled'
         }
 
+    key_cf_ttl = f"cf_{body['host']}"
+    if is_not_empty(_CACHE_ADAPTER.get(key_cf_ttl)):
+        log_msg("WARN", "[send_contact_form_request] Sender exceed rate limiting (max = {} seconds): from = {}, host = {}, to = {}, content = {}".format(_TTL_CONTACT_FORM, mail_from, body['host'], mail_to, body))
+        return {
+            'status': 'ko',
+            'i18n_code': 'cf_rate_limiting',
+            'http_code': 429,
+            'error': f"You exceed the rate limiting, retry in {_TTL_CONTACT_FORM} seconds",
+            'cid': get_current_cid()
+        }
+
     is_acceptable, i18n_code = is_message_acceptable(body['message'])
     if is_false(is_acceptable):
         log_msg("WARN", "[send_contact_form_request] Content looks like spam: from = {}, host = {}, to = {}, content = {}".format(mail_from, body['host'], mail_to, body))
+        _CACHE_ADAPTER().put(key_cf_ttl, body['host'], _TTL_CONTACT_FORM, "seconds")
         return {
             'status': 'ko',
             'i18n_code': i18n_code,
@@ -200,6 +214,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
     )
 
     log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, subject = {}, content = {}".format(mail_from, mail_to, reply_to, subject, body))
+    _CACHE_ADAPTER().put(key_cf_ttl, body['host'], _TTL_CONTACT_FORM, "seconds")
     return EMAIL_ADAPTER().send({
         'from': mail_from,
         'replyto': reply_to,

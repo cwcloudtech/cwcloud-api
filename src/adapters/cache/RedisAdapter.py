@@ -16,8 +16,16 @@ class RedisAdapter(CacheAdapter):
             log_msg("DEBUG", "[cache][RedisAdapter][get] cannot decode data, returning directly data = {}".format(data))
             return data
 
-    def put(self, key, value, ttl):
-        redis.set(key, value, ex = timedelta(hours = ttl))
+    def put(self, key, value, ttl, unit = "hours"):
+        if unit == "microseconds":
+            td = timedelta(microseconds = ttl)
+        elif unit == "seconds":
+            td = timedelta(seconds = ttl)
+        elif unit == "minutes":
+            td = timedelta(minutes = ttl)
+        else:
+            td = timedelta(hours = ttl)
+        redis.set(key, value, ex = td)
 
     def delete(self, key):
         redis.delete(key)
