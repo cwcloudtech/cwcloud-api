@@ -155,7 +155,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
 
     is_acceptable, i18n_code = is_message_acceptable(body['message'])
     if is_false(is_acceptable):
-        log_msg("WARN", "[send_contact_form_request] Content looks like spam: from = {}, to = {}, content = {}".format(mail_from, mail_to, body))
+        log_msg("WARN", "[send_contact_form_request] Content looks like spam: from = {}, host = {}, to = {}, content = {}".format(mail_from, body['host'], mail_to, body))
         return {
             'status': 'ko',
             'i18n_code': i18n_code,
