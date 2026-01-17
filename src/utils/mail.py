@@ -155,10 +155,10 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
             'response': 'Email third part is disabled'
         }
 
-    key_cf_ttl = f"cf_{body['host']}"
-    if is_not_empty(_CACHE_ADAPTER().get(key_cf_ttl)):
+    key_cf_rate_limit = f"cf_{body['form_id']}_{body['host']}" if is_not_empty_key(body, 'form_id') else f"cf_{body['host']}"
+    if is_not_empty(_CACHE_ADAPTER().get(key_cf_rate_limit)):
         log_msg("WARN", "[send_contact_form_request] Sender exceed rate limiting (max = {} seconds): from = {}, host = {}, to = {}, content = {}".format(_TTL_CONTACT_FORM, mail_from, body['host'], mail_to, body))
-        _CACHE_ADAPTER().put(key_cf_ttl, body['host'], _TTL_CONTACT_FORM, "seconds")
+        _CACHE_ADAPTER().put(key_cf_rate_limit, body['host'], _TTL_CONTACT_FORM, "seconds")
         return {
             'status': 'ko',
             'i18n_code': 'cf_rate_limiting',
@@ -170,7 +170,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
     is_acceptable, i18n_code = is_message_acceptable(body['message'])
     if is_false(is_acceptable):
         log_msg("WARN", "[send_contact_form_request] Content looks like spam: from = {}, host = {}, to = {}, content = {}".format(mail_from, body['host'], mail_to, body))
-        _CACHE_ADAPTER().put(key_cf_ttl, body['host'], _TTL_CONTACT_FORM, "seconds")
+        _CACHE_ADAPTER().put(key_cf_rate_limit, body['host'], _TTL_CONTACT_FORM, "seconds")
         return {
             'status': 'ko',
             'i18n_code': i18n_code,
@@ -215,7 +215,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
     )
 
     log_msg("INFO", "[send_contact_form_request] Send from = {}, to = {}, reply_to = {}, subject = {}, content = {}".format(mail_from, mail_to, reply_to, subject, body))
-    _CACHE_ADAPTER().put(key_cf_ttl, body['host'], _TTL_CONTACT_FORM, "seconds")
+    _CACHE_ADAPTER().put(key_cf_rate_limit, body['host'], _TTL_CONTACT_FORM, "seconds")
     return EMAIL_ADAPTER().send({
         'from': mail_from,
         'replyto': reply_to,
