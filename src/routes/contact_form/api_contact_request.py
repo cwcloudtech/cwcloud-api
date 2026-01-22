@@ -59,6 +59,7 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
             'host': get_client_host_from_request(request),
             'name': payload.name,
             'firstname': payload.firstname,
+            'phone': payload.phone,
             'form_id': form.id,
             'form_name': form.name
         }

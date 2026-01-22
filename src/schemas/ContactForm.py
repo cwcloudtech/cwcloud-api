@@ -18,3 +18,4 @@ class ContactFormRequestSchema(BaseModel):
     message: str
     firstname: Optional[str]
     name: Optional[str]
+    phone: Optional[str]

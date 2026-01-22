@@ -191,6 +191,10 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
     if is_not_empty_key(body, 'firstname'):
         opt_firstname = f"<li><b>First name:</b> {body['firstname']}</li>"
 
+    opt_phone = ""
+    if is_not_empty_key(body, 'phone'):
+        opt_phone = f"<li><b>Phone:</b> {body['phone']}</li>"
+
     opt_form = ""
     if is_not_empty_key(body, 'form_id') and is_not_empty_key(body, 'form_name'):
         opt_form = f"<li><b>Form:</b> {body['form_id']} / {body['form_name']}</li>"
@@ -200,6 +204,7 @@ def send_contact_form_request(mail_from, reply_to, mail_to, body, subject, copyr
         f"<li><b>Email:</b> {mail_from}</li>" \
         f"{opt_firstname}" \
         f"{opt_name}" \
+        f"{opt_phone}" \
         f"<li><b>Host:</b> {body['host']}</li>" \
         f"<li><b>Api env:</b> {get_api_url()}</li>" \
         f"{opt_form}" \
