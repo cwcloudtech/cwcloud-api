@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, UUID4
 
 class ContactFormSchema(BaseModel):
     name: str
@@ -12,7 +12,7 @@ class AdminContactFormSchema(ContactFormSchema):
     user_id: str
 
 class ContactFormRequestSchema(BaseModel):
-    id: str
+    id: UUID4
     email: str
     subject: str
     message: str

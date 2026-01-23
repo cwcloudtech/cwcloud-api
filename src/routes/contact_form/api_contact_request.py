@@ -54,9 +54,13 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
                 'cid': get_current_cid()
             }, status_code = 400)
 
+        host = request.headers.get("X-Client-IP")
+        if is_empty(host):
+            host = get_client_host_from_request(request)
+
         body = {
             'message': message,
-            'host': get_client_host_from_request(request),
+            'host': host,
             'name': payload.name,
             'firstname': payload.firstname,
             'phone': payload.phone,
