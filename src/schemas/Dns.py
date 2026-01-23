@@ -9,7 +9,7 @@ class DnsRecordSchema(BaseModel):
     type: Literal["A", "AAAA", "NS", "CNAME", "DNAME", "TXT"]
     ttl: NonNegativeInt
     data: Optional[str] = ""
-    
+ 
 class DnsDeleteSchema(BaseModel):
     id: str
     record_name: str
