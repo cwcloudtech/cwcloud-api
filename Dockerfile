@@ -85,6 +85,8 @@ FROM api AS code_scanner
 
 WORKDIR /app/src
 
-RUN pip install bandit
+RUN pip install --no-cache-dir bandit
 
-CMD ["bandit", "-r", ".", "-f", "screen"]
+COPY ./bandit.yml /app/bandit.yml
+
+CMD ["bandit", "-c", "/app/bandit.yml", "-r", ".", "-f", "screen"]
