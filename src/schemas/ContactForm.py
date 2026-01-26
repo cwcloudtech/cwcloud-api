@@ -5,8 +5,9 @@ class ContactFormSchema(BaseModel):
     name: str
     mail_from: str
     mail_to: str
-    copyright_name: Optional[str]
-    logo_url: Optional[str]
+    copyright_name: Optional[str] = ""
+    logo_url: Optional[str] = ""
+    trusted_ips: Optional[str] = ""
 
 class AdminContactFormSchema(ContactFormSchema):
     user_id: str

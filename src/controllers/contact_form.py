@@ -61,7 +61,7 @@ def update_form(current_user, form_id, payload, db):
         }, status_code = 404)
 
     payload.name = "{}-{}".format(payload.name, form.hash)
-    ContactForm.updateInfo(form_id, payload.name, payload.mail_from, payload.mail_to, payload.copyright_name, payload.logo_url, db)
+    ContactForm.updateInfo(form_id, payload.name, payload.mail_from, payload.mail_to, payload.copyright_name, payload.logo_url, payload.trusted_ips, db)
 
     return JSONResponse(content = {
         'status': 'ok',

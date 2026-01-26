@@ -6,7 +6,8 @@ from schemas.ContactForm import ContactFormRequestSchema
 from controllers.contact_form import get_form_by_id
 from database.postgres_db import get_db
 
-from utils.common import is_empty, is_false
+from utils.common import is_empty, is_false, is_not_empty
+from utils.logger import log_msg
 from utils.mail import send_contact_form_request
 from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
@@ -54,9 +55,13 @@ def send_email(request: Request, payload: ContactFormRequestSchema, db: Session 
                 'cid': get_current_cid()
             }, status_code = 400)
 
-        host = request.headers.get("X-Client-IP")
-        if is_empty(host):
-            host = get_client_host_from_request(request)
+        host = get_client_host_from_request(request)
+        if is_not_empty(form.trusted_ips):
+            trusted_ips = form.trusted_ips.split(';')
+            if host in trusted_ips:
+                trusted_host = host
+                host = request.headers.get("X-Client-IP", host)
+                log_msg("INFO", f"[api_contact_request][send_email] contact request sent from a trusted host {trusted_host} with client {host}")
 
         body = {
             'message': message,

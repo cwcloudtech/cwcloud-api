@@ -13,6 +13,7 @@ class ContactForm(Base):
     hash = Column(String(10))
     copyright_name = Column(String)
     logo_url = Column(String)
+    trusted_ips = Column(String)
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=False)
 
@@ -53,6 +54,6 @@ class ContactForm(Base):
         db.commit()
 
     @staticmethod
-    def updateInfo(contact_form_id, name, mail_from, mail_to, copyright_name, logo_url, db):
-        db.query(ContactForm).filter(ContactForm.id == contact_form_id).update({"name": name, "mail_from": mail_from, "mail_to": mail_to, "copyright_name": copyright_name, "logo_url": logo_url})
+    def updateInfo(contact_form_id, name, mail_from, mail_to, copyright_name, logo_url, trusted_ips, db):
+        db.query(ContactForm).filter(ContactForm.id == contact_form_id).update({"name": name, "mail_from": mail_from, "mail_to": mail_to, "copyright_name": copyright_name, "logo_url": logo_url, "trusted_ips": trusted_ips})
         db.commit()
