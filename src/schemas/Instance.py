@@ -10,7 +10,7 @@ DEFAULT_PROVIDER = os.getenv('DEFAULT_PROVIDER', 'scaleway')
 
 class InstanceUpdateSchema(BaseModel):
     status: Optional[str] = None
-    is_protected: Optional[bool] = False
+    is_protected: Optional[bool] = None
 
 class InstanceAttachSchema(BaseModel):
     name: str = "Instance Name"

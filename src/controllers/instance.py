@@ -279,22 +279,6 @@ def update_instance(current_user, payload, provider, region, instance_id, db):
             update_instance_status(userInstance, target_server_id, action, db)
 
     if is_boolean(is_protected):
-        if is_true(is_protected) and userInstance.is_protected:
-            return JSONResponse(content = {
-                'status': 'ko',
-                'error': 'Instance already protected',
-                'i18n_code': 'instance_already_protected',
-                'cid': get_current_cid()
-            }, status_code = 400)
-
-        if is_false(is_protected) and not userInstance.is_protected:
-            return JSONResponse(content = {
-                'status': 'ko',
-                'error': 'Instance already unprotected',
-                'i18n_code': 'instance_already_unprotected',
-                'cid': get_current_cid()
-            }, status_code = 400)
-
         Instance.updateProtection(userInstance.id, is_protected, db)
 
     return JSONResponse(content = {
