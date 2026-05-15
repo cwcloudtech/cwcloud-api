@@ -122,7 +122,7 @@ def update_instance(request: Request, instance_id: str, payload: ControlUpdateIn
 
         target_server_id = server["id"]
 
-        if not action  == "activate":
+        if not action == "activate":
             return JSONResponse(content = {
                 'status': 'ko',
                 'error': "This action doesn't exist",
@@ -139,7 +139,7 @@ def update_instance(request: Request, instance_id: str, payload: ControlUpdateIn
             update_instance_status(userInstance, target_server_id, action, db)
             return JSONResponse(content = {
                 'status': 'ok',
-                'message': 'instance successfully updated', 
+                'message': 'instance successfully updated',
                 'i18n_code': 'instance_updated'
             }, status_code = 200)
         except HTTPError as e:

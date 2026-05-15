@@ -275,15 +275,14 @@ def update_instance(current_user, payload, provider, region, instance_id, db):
                 'cid': get_current_cid()
             }, status_code = 400)
 
-        if action and not action == "":
-            update_instance_status(userInstance, target_server_id, action, db)
+        update_instance_status(userInstance, target_server_id, action, db)
 
     if is_boolean(is_protected):
         Instance.updateProtection(userInstance.id, is_protected, db)
 
     return JSONResponse(content = {
         'status': 'ok',
-        'message': 'instance successfully updated',
+        'message': 'Instance successfully updated',
         'i18n_code': '101'
     }, status_code = 200)
 

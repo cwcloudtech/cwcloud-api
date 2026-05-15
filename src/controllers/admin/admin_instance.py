@@ -565,6 +565,7 @@ def admin_update_instance(current_user, instance_id, payload, db):
                 'i18n_code': 'active_not_exist',
                 'cid': get_current_cid()
             }, status_code = 400)
+
         server_state = get_server_state(userInstance.provider, server)
         if action == "poweroff":
             if server_state == "stopped":
@@ -657,10 +658,11 @@ def admin_update_instance(current_user, instance_id, payload, db):
         if userInstance.status == "active" and action == "activate":
             return JSONResponse(content = {
                 'status': 'ko',
-                'error': 'instance already active', 
+                'error': 'Instance already active',
                 'i18n_code': 'instance_active',
                 'cid': get_current_cid()
             }, status_code = 400)
+
         update_instance_status(userInstance, target_server_id, action, db)
 
     if is_boolean(is_protected):
@@ -668,7 +670,7 @@ def admin_update_instance(current_user, instance_id, payload, db):
 
     return JSONResponse(content = {
         'status': 'ok',
-        'message': 'instance successfully updated', 
+        'message': 'Instance successfully updated',
         'i18n_code': 'instance_updated'
     }, status_code = 200)
 
