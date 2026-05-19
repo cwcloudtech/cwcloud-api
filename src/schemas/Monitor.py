@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Literal
 from enum import Enum
 
 class HttpMethod(str, Enum):
@@ -57,3 +57,11 @@ class MonitorSchema(BaseMonitorSchema):
 
 class AdminMonitorSchema(BaseMonitorSchema):
     user_id: int
+
+class ImAliveSchema(BaseModel):
+    status: Literal["ok", "ko"] = Field(..., examples=["ok", "ko"])
+    type: Literal["monitor"] = Field(default="monitor")
+    time: str
+    message: str
+    monitor: Dict[str, Any]
+    duration: Optional[float] = None

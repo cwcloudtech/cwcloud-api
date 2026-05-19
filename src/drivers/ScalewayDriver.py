@@ -251,11 +251,13 @@ class ScalewayDriver(ProviderDriver):
     def update_virtual_machine_status(self, region, zone, server_id, action):
         regionZone = "{}-{}".format(region, zone)
         actionData = {'action':action}
-        res = requests.post(f'{SCW_API_URL}/instance/v1/zones/{regionZone}/servers/{server_id}/action',
-                                headers={"X-Auth-Token": SCW_SECRET_KEY},
-                                json=actionData,
-                                timeout=HTTP_REQUEST_TIMEOUT
-                            )
+        url = f'{SCW_API_URL}/instance/v1/zones/{regionZone}/servers/{server_id}/action'
+        res = requests.post(url,
+            headers={"X-Auth-Token": SCW_SECRET_KEY},
+            json=actionData,
+            timeout=HTTP_REQUEST_TIMEOUT
+        )
+        log_msg("INFO", f"[ScalewayDriver][update_virtual_machine_status] Updating instance {server_id} status with action {action}, and url {url}, response status: {res.status_code}")
         if res.status_code == 404:
             message = f"resource {server_id} not found."
             raise HTTPError("instance_not_found", res.status_code, message, hdrs = {"i18n_code": "instance_not_found"}, fp = None)

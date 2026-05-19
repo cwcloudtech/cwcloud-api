@@ -7,7 +7,7 @@ from datetime import datetime
 from entities.Monitor import Monitor
 from utils.common import get_env_int, is_empty, is_false, is_not_empty, is_not_http_status_code
 from utils.observability.cid import get_current_cid
-from utils.observability.monitor import not_match_tcp_url_format
+from utils.observability.monitor import ingest_imalive_payload, not_match_tcp_url_format
 from utils.dynamic_name import generate_hashed_name
 
 def get_monitors(current_user, db, family: Optional[str] = None):
@@ -139,3 +139,12 @@ def remove_monitor(current_user, monitor_id, db):
         'id': monitor_id,
         'i18n_code': 'monitor_deleted'
     })
+
+def ingest_imalive(current_user, payload):
+    set_result = ingest_imalive_payload(payload.dict(), current_user.id)
+
+    return JSONResponse(content = {
+        'status': 'ok',
+        'message': 'imalive payload processed',
+        'value': set_result
+    }, status_code = 201)

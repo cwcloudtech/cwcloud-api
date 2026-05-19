@@ -115,6 +115,7 @@ class AwsDriver(ProviderDriver):
             'max_attempts': 10,
             'mode': 'standard'
         })
+        log_msg("INFO", f"[AwsDriver][update_virtual_machine_status] Updating instance {server_id} status with action {action}")
         client = boto3.client('ec2', config = my_config, aws_access_key_id = get_driver_access_key_id(), aws_secret_access_key = get_driver_secret_access_key())
         if action == "poweroff":
             client.stop_instances(InstanceIds = [server_id])

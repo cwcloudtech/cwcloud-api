@@ -49,7 +49,7 @@ def import_resources(app):
     from routes.admin.iot import api_admin_device
     from routes.admin.iot import api_admin_data
     from routes.admin.dns import api_admin_dns
-    from routes.monitor import api_monitor
+    from routes.monitor import api_monitor, api_imalive
     from routes.tracker import api_tracker
     from routes.admin.contact_form import api_admin_contact_form
     from routes.admin.monitor import api_admin_monitor
@@ -96,6 +96,7 @@ def import_resources(app):
     app.include_router(api_data.router, tags = ['IoT'], prefix = f'/{version}/iot')
     app.include_router(api_kv.router, tags = ['Storage'], prefix = f'/{version}/storage/kv')
     app.include_router(api_monitor.router, tags = ['Observability'], prefix = f'/{version}/monitor')
+    app.include_router(api_imalive.router, tags = ['Observability'], prefix = f'/{version}/imalive')
     app.include_router(api_tracker.router, tags = ['Observability'], prefix = f'/{version}/tracker')
     app.include_router(api_contact_form.router, tags = ['Contact forms'], prefix = f'/{version}/contactform')
     app.include_router(api_contact_request.router, tags = ['Contact forms'], prefix = f'/{version}/contactreq')

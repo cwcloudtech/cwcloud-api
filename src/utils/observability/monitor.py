@@ -11,7 +11,7 @@ from time import sleep
 
 from requests.auth import HTTPBasicAuth
 
-from utils.common import del_key_if_exists, get_env_int, get_or_else, is_empty_key, is_not_empty, is_not_empty_key, is_true, sanitize_header_name
+from utils.common import del_key_if_exists, get_env_int, get_or_else, is_empty_key, is_not_empty, is_not_empty_key, is_true, sanitize_header_name, sanitize_metric_name
 from utils.faas.iot import send_payload_in_realtime
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.logger import LOG_LEVEL, get_int_value_level, log_msg
@@ -24,6 +24,58 @@ from utils.env_vars import APP_ENV, APP_VERSION, DOMAIN
 MONITOR_SRC = os.getenv("MONITOR_SRC", "cwcloud-api")
 MONITOR_WAIT_TIME = get_env_int("MONITOR_WAIT_TIME", 300)
 _supported_monitor_types = ["http", "tcp"]
+
+imalive_gauges = {}
+
+def convert_imalive_metric_to_gauge(name, node, payload, key, labels):
+    if is_not_empty_key(payload, key):
+        disk = payload[key]
+        for k in ['total', 'used', 'free', 'percent']:
+            metric_name = f"imalive_{name}_{k}"
+            if metric_name not in imalive_gauges:
+                imalive_gauges[metric_name] = create_gauge(metric_name, f"imalive {name} {k}", list(labels.keys()))
+            set_gauge(imalive_gauges[metric_name], disk.get(k, 0), labels)
+
+def ingest_imalive_payload(payload, user_id):
+    node_name = get_or_else(payload, 'name', 'unknown')
+    pmonitor = get_or_else(payload, 'monitor', {})
+    monitor_name = get_or_else(pmonitor, 'name', 'unknown')
+    gauge_key = sanitize_metric_name(monitor_name)
+    labels = ['name', 'family', 'kind', 'env', 'source', 'url', 'version', 'user', 'node']
+
+    base_metric_labels = {
+        'name': gauge_key,
+        'family': get_or_else(pmonitor, 'family', gauge_key),
+        'source': MONITOR_SRC,
+        'url': DOMAIN,
+        'env': APP_ENV,
+        'version': APP_VERSION,
+        'user': str(user_id),
+        'node': node_name,
+    }
+
+    if is_not_empty_key(payload, 'monitor'):
+        if gauge_key not in imalive_gauges:
+            imalive_gauges[gauge_key] = {
+                'result': create_gauge(f"imalive_{gauge_key}_result", f"imalive {gauge_key} result", labels),
+                'duration': create_gauge(f"imalive_{gauge_key}_duration", f"imalive {gauge_key} duration", labels)
+            }
+        value = 1 if get_or_else(payload, 'status', 'ko') == 'ok' else 0
+        duration = get_or_else(payload, 'duration', 0)
+        set_gauge(imalive_gauges[gauge_key]['result'], value, {**base_metric_labels, 'kind': 'result'})
+        set_gauge(imalive_gauges[gauge_key]['duration'], duration, {**base_metric_labels, 'kind': 'duration'})
+
+    convert_imalive_metric_to_gauge('disk', node_name, payload, 'disk_usage', base_metric_labels)
+    convert_imalive_metric_to_gauge('ram', node_name, payload, 'virtual_memory', base_metric_labels)
+    convert_imalive_metric_to_gauge('swap', node_name, payload, 'swap_memory', base_metric_labels)
+
+    if is_not_empty_key(payload, 'cpu'):
+        cpu = payload['cpu']
+        if is_not_empty_key(cpu, 'percent') and is_not_empty_key(cpu['percent'], 'all'):
+            metric_name = f"imalive_cpu_all"
+            if metric_name not in imalive_gauges:
+                imalive_gauges[metric_name] = create_gauge(metric_name, "imalive cpu percent all", list(base_metric_labels.keys()))
+            set_gauge(imalive_gauges[metric_name], cpu['percent']['all'], base_metric_labels)
 
 def check_status_code_pattern(actual_code, pattern):
     regexp = "^{}$".format(pattern.replace('*', '[0-9]+'))

@@ -209,7 +209,7 @@ class GcpDriver(ProviderDriver):
             _google_app_credentials,
             scopes = ['https://www.googleapis.com/auth/cloud-platform'])
         client = compute_v1.InstancesClient(credentials = credentials)
-
+        log_msg("INFO", f"[GcpDriver][update_virtual_machine_status] Updating instance {server_id} status with action {action}")
         i_name = client.get(project = _gcp_project_id, zone = availibility_zone, instance = str(server_id)).name
         if action == "poweroff":
             client.stop(project = _gcp_project_id, zone = availibility_zone, instance = i_name)

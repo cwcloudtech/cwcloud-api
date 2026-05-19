@@ -229,7 +229,7 @@ def update_virtual_machine_status(provider, region, zone, server_id, action):
     return ProviderDriver().update_virtual_machine_status(region, zone, server_id, action)
 
 def update_instance_status(instance, server_id, action, db):
-    if not action == 'activate' and not action == 'delete':
+    if action != 'activate' and action != 'delete':
         update_virtual_machine_status(instance.provider, instance.region, instance.zone, server_id, action)
 
     switcher = {

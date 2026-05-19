@@ -133,6 +133,7 @@ class OvhDriver(ProviderDriver):
 
     def update_virtual_machine_status(self, region, zone, server_id, action):
         con = get_openstack_connection(region)
+        log_msg("INFO", f"[OvhDriver][update_virtual_machine_status] Updating instance {server_id} status with action {action}")
         if action == "poweroff":
             con.compute.stop_server(server_id)
         elif action == "reboot":

@@ -198,20 +198,20 @@ class AzureDriver(ProviderDriver):
         instance_name = server_id.split('/')[-1]
         credential = DefaultAzureCredential()
         compute_client = ComputeManagementClient(credential, subscription_id)
+        log_msg("INFO", f"[AzureDriver][update_virtual_machine_status] Updating instance {server_id} status with action {action}")
         try:
             if action == "poweroff":
                 compute_client.virtual_machines.begin_power_off(resource_group_name, instance_name).wait()
-                log_msg("INFO", "[poweroff_machine_azure] vm {} powered off".format(instance_name))
+                log_msg("INFO", f"[AzureDriver][poweroff_machine] vm {instance_name} powered off")
             elif action == "reboot":
                 compute_client.virtual_machines.begin_restart(resource_group_name, instance_name).wait()
-                log_msg("INFO", "[reboot_machine_azure] reboot vm {}".format(instance_name))
+                log_msg("INFO", f"[AzureDriver][reboot_machine] reboot vm {instance_name}")
             elif action == "poweron":
                 compute_client.virtual_machines.begin_start(resource_group_name, instance_name).wait()
-                log_msg("INFO", "[poweron_machine_azure] vm {} powered on".format(instance_name))
-        
+                log_msg("INFO", f"[AzureDriver][poweron_machine] vm {instance_name} powered on")
         except Exception as ex:
-            log_msg("INFO", "[update_virtual_machine_status] An unexpected error occurred:  {}".format(ex))   
-                 
+            log_msg("INFO", f"[AzureDriver][update_virtual_machine_status] An unexpected error occurred: {ex}")
+
     def create_bucket(self, user_email, hashed_bucket_name, region, bucket_type):
         return
 
