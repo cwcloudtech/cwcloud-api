@@ -31,10 +31,10 @@ def convert_imalive_metric_to_gauge(name, node, payload, key, labels):
     if is_not_empty_key(payload, key):
         disk = payload[key]
         for k in ['total', 'used', 'free', 'percent']:
-            metric_name = f"imalive_{name}_{k}"
-            metric_name_label = f"imalive_{name}_{node}_{k}"
+            metric_name = sanitize_metric_name(f"imalive_{name}_{k}")
+            metric_name_label = sanitize_metric_name(f"imalive_{name}_{node}_{k}")
             if metric_name not in imalive_gauges:
-                imalive_gauges[metric_name] = create_gauge(metric_name, f"imalive {name} {k}", list(labels.keys()))
+                imalive_gauges[metric_name] = create_gauge(metric_name, f"imalive {name} {k}", list([*labels.keys(), 'name', 'kind']))
             set_gauge(imalive_gauges[metric_name], disk.get(k, 0), {**labels, 'name': metric_name_label, 'kind': name})
 
 def ingest_imalive_payload(payload, user_id):
@@ -42,34 +42,32 @@ def ingest_imalive_payload(payload, user_id):
     pmonitor = get_or_else(payload, 'monitor', {})
 
     if is_not_empty_key(payload, 'monitor'):
-        labels = ['name', 'family', 'kind', 'env', 'source', 'url', 'version', 'user', 'node']
         gauge_key = sanitize_metric_name(get_or_else(pmonitor, 'name', f"monitor_{node_name}"))
 
         base_monitor_labels = {
             'name': gauge_key,
             'family': get_or_else(pmonitor, 'family', gauge_key),
-            'source': node_name,
+            'env': APP_ENV,
+            'source': sanitize_metric_name(node_name),
             'url': get_or_else(pmonitor, 'url', DOMAIN),
             'type': get_or_else(pmonitor, 'type', 'unknown'),
-            'env': APP_ENV,
             'version': APP_VERSION,
             'user': str(user_id)
         }
 
         if gauge_key not in imalive_gauges:
             imalive_gauges[gauge_key] = {
-                'result': create_gauge(f"imalive_{gauge_key}_result", f"imalive {gauge_key} result", labels),
-                'duration': create_gauge(f"imalive_{gauge_key}_duration", f"imalive {gauge_key} duration", labels)
+                'result': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_result"), f"imalive {gauge_key} result", list([*base_monitor_labels.keys(), 'kind'])),
+                'duration': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_duration"), f"imalive {gauge_key} duration", list([*base_monitor_labels.keys(), 'kind']))
             }
         value = 1 if get_or_else(payload, 'status', 'ko') == 'ok' else 0
         duration = get_or_else(payload, 'duration', 0)
         set_gauge(imalive_gauges[gauge_key]['result'], value, {**base_monitor_labels, 'kind': 'result'})
         set_gauge(imalive_gauges[gauge_key]['duration'], duration, {**base_monitor_labels, 'kind': 'duration'})
 
-    labels = ['name', 'kind', 'env', 'source', 'version', 'user']
     base_metric_labels = {
-        'source': node_name,
         'env': APP_ENV,
+        'source': sanitize_metric_name(node_name),
         'version': APP_VERSION,
         'user': str(user_id)
     }
@@ -81,9 +79,9 @@ def ingest_imalive_payload(payload, user_id):
         cpu = payload['cpu']
         if is_not_empty_key(cpu, 'percent') and is_not_empty_key(cpu['percent'], 'all'):
             metric_name = "imalive_cpu_all"
-            metric_name_label = f"imalive_cpu_all_{node_name}"
+            metric_name_label = sanitize_metric_name(f"imalive_cpu_all_{node_name}")
             if metric_name not in imalive_gauges:
-                imalive_gauges[metric_name] = create_gauge(metric_name, "imalive cpu percent all", list(base_metric_labels.keys()))
+                imalive_gauges[metric_name] = create_gauge(metric_name, "imalive cpu percent all", list([*base_metric_labels.keys(), 'name', 'kind']))
             set_gauge(imalive_gauges[metric_name], cpu['percent']['all'], {**base_metric_labels, 'name': metric_name_label, 'kind': 'cpu'})
 
 def check_status_code_pattern(actual_code, pattern):
