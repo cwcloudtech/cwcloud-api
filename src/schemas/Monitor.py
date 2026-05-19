@@ -59,9 +59,14 @@ class AdminMonitorSchema(BaseMonitorSchema):
     user_id: int
 
 class ImAliveSchema(BaseModel):
-    status: Literal["ok", "ko"] = Field(..., examples=["ok", "ko"])
-    type: Literal["monitor"] = Field(default="monitor")
+    status: Optional[Literal["ok", "ko"]] = Field(default = "ok", examples=["ok", "ko"])
+    type: Literal["monitor", "heartbit"] = Field(default="monitor")
     time: str
-    message: str
-    monitor: Dict[str, Any]
+    name: Optional[str] = None
+    message: Optional[str] = None
+    monitor: Optional[Dict[str, Any]] = None
     duration: Optional[float] = None
+    disk_usage: Optional[Dict[str, Any]] = None
+    virtual_memory: Optional[Dict[str, Any]] = None
+    swap_memory: Optional[Dict[str, Any]] = None
+    cpu: Optional[Dict[str, Any]] = None
