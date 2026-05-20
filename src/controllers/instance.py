@@ -275,7 +275,15 @@ def update_instance(current_user, payload, provider, region, instance_id, db):
                 'cid': get_current_cid()
             }, status_code = 400)
 
-        update_instance_status(userInstance, target_server_id, action, db)
+        try:
+            update_instance_status(userInstance, target_server_id, action, db)
+        except HTTPError as e:
+            return JSONResponse(content = {
+                'status': 'ko',
+                'error': e.msg, 
+                'i18n_code': e.headers['i18n_code'],
+                'cid': get_current_cid()
+            }, status_code = e.code)
 
     if is_boolean(is_protected):
         Instance.updateProtection(userInstance.id, is_protected, db)

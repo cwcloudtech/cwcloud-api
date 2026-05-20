@@ -9,7 +9,7 @@ from pulumi import automation as auto
 from urllib.error import HTTPError
 
 from drivers.ProviderDriver import ProviderDriver
-from utils.common import is_not_empty, is_true
+from utils.common import is_not_empty, is_response_ko, is_true
 from utils.dns_zones import get_dns_zone_driver, register_scaleway_domain
 from utils.driver import convert_instance_state, sanitize_project_name
 from utils.dynamic_name import rehash_dynamic_name
@@ -261,6 +261,10 @@ class ScalewayDriver(ProviderDriver):
         if res.status_code == 404:
             message = f"resource {server_id} not found."
             raise HTTPError("instance_not_found", res.status_code, message, hdrs = {"i18n_code": "instance_not_found"}, fp = None)
+        elif is_response_ko(res.status_code):
+            message = f"error while updating instance status, code: {res.status_code}, response: {res.text}"
+            log_msg("ERROR", f"[ScalewayDriver][update_virtual_machine_status] {message}")
+            raise HTTPError("update_instance_status_failed", res.status_code, message, hdrs = {"i18n_code": "update_instance_status_failed"}, fp = None)
 
     def create_bucket(self, user_email, hashed_bucket_name, region, bucket_type):
         def create_pulumi_program():
