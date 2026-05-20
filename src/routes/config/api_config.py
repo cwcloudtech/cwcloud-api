@@ -1,10 +1,13 @@
+import qrcode
+
 from pathlib import Path
+from io import BytesIO
 from typing import Annotated
 from sqlalchemy.orm import Session
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from fastapi import Depends, APIRouter
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 
 from schemas.User import UserSchema
 from middleware.auth_guard import get_current_active_user
@@ -23,6 +26,26 @@ router = APIRouter()
 
 _span_prefix = "config"
 _counter = create_counter("config_api", "Config API counter")
+
+@router.get("/{key_id}/qr")
+def get_qr_code(current_user: Annotated[UserSchema, Depends(get_current_active_user)], key_id: str, db: Session = Depends(get_db)):
+    with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET)):
+        increment_counter(_counter, Method.GET)
+        apiKey = ApiKeys.getUserApiKey(current_user.id, key_id, db)
+        if not apiKey:
+            return JSONResponse(content = {
+                "error": "api key not found",
+                "i18n_code": "api_key_not_found"
+            }, status_code = 404)
+
+        qr_value = f"{get_api_url()}={apiKey.secret_key}"
+        qr_image = qrcode.make(qr_value)
+
+        image_buffer = BytesIO()
+        qr_image.save(image_buffer, format="PNG")
+        image_buffer.seek(0)
+
+        return StreamingResponse(image_buffer, media_type="image/png")
 
 @router.get("/{key_id}")
 def download_config_file(current_user: Annotated[UserSchema, Depends(get_current_active_user)], key_id: str, db: Session = Depends(get_db)):
