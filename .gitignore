@@ -8,3 +8,4 @@ src/utils/easy-work
 docker-compose-local-*.yml
 azure-app-credentials.json
 cwcloud-helm-cwc
+.claude
