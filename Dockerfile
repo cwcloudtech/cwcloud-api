@@ -34,13 +34,11 @@ RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
     /root/.pulumi/bin/pulumi plugin install resource cloudflare --exact || true
 
 COPY ./requirements.txt /app/requirements.txt
-COPY ./ci/patch_j2cli3.py /app/ci/patch_j2cli3.py
 
 RUN find . -name '*.pyc' -type f -delete && \
     pip install --upgrade pip && \
     pip install --no-cache-dir --force-reinstall "Pillow>=11.3.0" && \
     pip install --no-cache-dir -r requirements.txt && \
-    python3 ci/patch_j2cli3.py && \
     apk del .build-deps && \
     rm -rf *.tgz
 

@@ -9,14 +9,14 @@ generate_ansible_envs() {
     args_values_file="env/args_values_${env_name}.json"
 
     if [[ -f $args_values_file ]]; then
-        j2 env/${env_name}.yml.j2 "${args_values_file}" > env/${env_name}.yml
-        j2 env/${env_name}.md.j2 "${args_values_file}" > env/${env_name}.md
+        jinjanate env/${env_name}.yml.j2 "${args_values_file}" > env/${env_name}.yml
+        jinjanate env/${env_name}.md.j2 "${args_values_file}" > env/${env_name}.md
     else
-        j2 env/${env_name}.yml.j2 > env/${env_name}.yml
-        j2 env/${env_name}.md.j2 > env/${env_name}.md
+        jinjanate env/${env_name}.yml.j2 > env/${env_name}.yml
+        jinjanate env/${env_name}.md.j2 > env/${env_name}.md
     fi
 
-    j2 .gitlab-ci.yml.j2 > "${env_name}-ci.yml"
+    jinjanate .gitlab-ci.yml.j2 > "${env_name}-ci.yml"
     rm -rf ".gitlab-ci.yml.j2" "env/${env_name}.yml.j2" "env/${env_name}.md.j2" "env/args_values_${env_name}.json"
 }
 
