@@ -1,7 +1,7 @@
 import os
 import sendgrid
 
-from sendgrid.helpers.mail import Mail, Email, To, Content, Attachment, FileContent, FileName, FileType, Disposition, ContentId, Attachment, FileContent, FileName, FileType, Disposition, ContentId, ReplyTo, Bcc, Cc
+from sendgrid.helpers.mail import Mail, Email, To, Content, Attachment, FileContent, FileName, FileType, Disposition, ContentId, ReplyTo, Bcc, Cc
 
 from utils import common
 from adapters.emails.EmailAdapter import EmailAdapter
@@ -10,6 +10,25 @@ from utils.mail import EMAIL_EXPEDITOR
 from utils.observability.cid import get_current_cid
 
 _sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+
+def _as_email_list(value):
+    return value if isinstance(value, list) else [value]
+
+def _build_attachment(payload):
+    if not any(common.is_not_empty_key(payload, k) for k in ['content', 'b64']) or any(common.is_empty_key(payload, k) for k in ['mime_type', 'file_name']):
+        return None
+
+    attachment = Attachment()
+    if common.is_not_empty_key(payload, "content"):
+        attachment.file_content = FileContent(payload['content'])
+    elif common.is_not_empty_key(payload, "b64"):
+        attachment.file_content = FileContent(payload['b64'])
+
+    attachment.file_type = FileType(payload['mime_type'])
+    attachment.file_name = FileName(payload['file_name'])
+    attachment.disposition = Disposition('attachment')
+    attachment.content_id = ContentId(payload['file_name'])
+    return attachment
 
 class SendgridAdapter(EmailAdapter):
     def is_disabled(self):
@@ -20,18 +39,20 @@ class SendgridAdapter(EmailAdapter):
         if common.is_not_empty_key(email, "from"):
             from_email = Email(email['from'])
 
-        to_email = Email(EMAIL_EXPEDITOR)
+        to_emails = [EMAIL_EXPEDITOR]
         if common.is_not_empty_key(email, "to"):
-            to_email = To(email['to'])
+            to_emails = _as_email_list(email['to'])
 
         content = Content("text/html", email['content'])
-        mail = Mail(from_email, to_email, email['subject'], content)
+        mail = Mail(from_email, [To(to_email) for to_email in to_emails], email['subject'], content)
 
         if common.is_not_empty_key(email, "cc"):
-            mail.add_cc(Cc(email['cc']))
+            for cc_email in _as_email_list(email['cc']):
+                mail.add_cc(Cc(cc_email))
 
         if common.is_not_empty_key(email, "bcc"):
-            mail.add_bcc(Bcc(email['bcc']))
+            for bcc_email in _as_email_list(email['bcc']):
+                mail.add_bcc(Bcc(bcc_email))
 
         if common.is_not_empty_key(email, "replyto"):
             mail.reply_to = ReplyTo(email['replyto'])
@@ -39,18 +60,16 @@ class SendgridAdapter(EmailAdapter):
         if common.is_not_empty_key(email, "from_name"):
             mail.from_email.name = email['from_name']
 
-        if common.is_not_empty_key(email, "attachment") and any(common.is_not_empty_key(email['attachment'], k) for k in ['content', 'b64']) and not any (common.is_empty_key(email['attachment'], k) for k in ['mime_type', 'file_name']):
-            attachment = Attachment()
-            if common.is_not_empty_key(email['attachment'], "content"):
-                attachment.file_content = FileContent(email['attachment']['content'])
-            elif common.is_not_empty_key(email['attachment'], "b64"):
-                attachment.file_content = FileContent(email['attachment']['b64'])
+        attachment_payloads = []
+        if common.is_not_empty_key(email, "attachment"):
+            attachment_payloads.append(email['attachment'])
+        if common.is_not_empty_key(email, "attachments"):
+            attachment_payloads.extend(email['attachments'])
 
-            attachment.file_type = FileType(email['attachment']['mime_type'])
-            attachment.file_name = FileName(email['attachment']['file_name'])
-            attachment.disposition = Disposition('attachment')
-            attachment.content_id = ContentId(email['attachment']['file_name'])
-            mail.attachment = attachment
+        for attachment_payload in attachment_payloads:
+            attachment = _build_attachment(attachment_payload)
+            if attachment is not None:
+                mail.add_attachment(attachment)
 
         try:
             if not common.is_disabled(_sendgrid_api_key):
