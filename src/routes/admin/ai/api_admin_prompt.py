@@ -60,7 +60,7 @@ def get_all_users_usage_summary(
     current_user: Annotated[UserSchema, Depends(admin_required)],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    group_by: str = Query("day", regex="^(day|week|month)$"),
+    group_by: str = Query("day", pattern="^(day|week|month)$"),
     db: Session = Depends(get_db)
 ):
     with get_otel_tracer().start_as_current_span(f"{_span_prefix}-{Method.GET}"):
