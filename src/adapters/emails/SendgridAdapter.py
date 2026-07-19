@@ -11,9 +11,6 @@ from utils.observability.cid import get_current_cid
 
 _sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
 
-def _as_email_list(value):
-    return value if isinstance(value, list) else [value]
-
 def _build_attachment(payload):
     if not any(common.is_not_empty_key(payload, k) for k in ['content', 'b64']) or any(common.is_empty_key(payload, k) for k in ['mime_type', 'file_name']):
         return None
@@ -35,23 +32,23 @@ class SendgridAdapter(EmailAdapter):
         return common.is_disabled(_sendgrid_api_key)
 
     def send(self, email):
+        email = self.dedupe_recipients(email)
+
         from_email = Email(EMAIL_EXPEDITOR)
         if common.is_not_empty_key(email, "from"):
             from_email = Email(email['from'])
 
-        to_emails = [EMAIL_EXPEDITOR]
-        if common.is_not_empty_key(email, "to"):
-            to_emails = _as_email_list(email['to'])
+        to_emails = email['to'] if common.is_not_empty_key(email, "to") else [EMAIL_EXPEDITOR]
 
         content = Content("text/html", email['content'])
         mail = Mail(from_email, [To(to_email) for to_email in to_emails], email['subject'], content)
 
         if common.is_not_empty_key(email, "cc"):
-            for cc_email in _as_email_list(email['cc']):
+            for cc_email in email['cc']:
                 mail.add_cc(Cc(cc_email))
 
         if common.is_not_empty_key(email, "bcc"):
-            for bcc_email in _as_email_list(email['bcc']):
+            for bcc_email in email['bcc']:
                 mail.add_bcc(Bcc(bcc_email))
 
         if common.is_not_empty_key(email, "replyto"):
@@ -78,7 +75,8 @@ class SendgridAdapter(EmailAdapter):
                 message = "code = {}, body = {}".format(sg_response.status_code, sg_response.body)
         except Exception as ex:
             message = "{}".format(ex)
-            log_msg("ERROR", "[SendgridAdapter][send] unexpected error : type = {}, file = {}, lno = {}, msg = {}".format(type(ex).__name__, __file__, ex.__traceback__.tb_lineno, ex))
+            body = getattr(ex, 'body', None)
+            log_msg("ERROR", "[SendgridAdapter][send] unexpected error : type = {}, file = {}, lno = {}, msg = {}, body = {}".format(type(ex).__name__, __file__, ex.__traceback__.tb_lineno, ex, body))
             return {
                 'status': 'ko',
                 'adapter': 'sendgrid',
