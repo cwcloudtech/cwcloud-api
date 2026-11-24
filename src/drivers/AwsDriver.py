@@ -18,6 +18,7 @@ from utils.logger import log_msg
 from utils.provider import get_specific_config, get_provider_dns_zones
 from utils.list import unmarshall_list_array
 from utils.aws_client import get_driver_access_key_id, get_driver_secret_access_key, create_aws_bucket, create_aws_registry, delete_aws_user_bucket, delete_aws_user_registry, get_aws_bucket_name, get_aws_registry_name, update_aws_bucket_credentials, update_aws_registry_credentials, get_driver_access_key_id, get_driver_secret_access_key 
+from utils.file import read_file_content
 
 CACHE_ADAPTER = get_adapter('cache')
 
@@ -45,7 +46,7 @@ class AwsDriver(ProviderDriver):
                 subnet_id = aws_subnet_id,
                 vpc_security_group_ids = [ aws_sg_id ],
                 tags = { "Name": hashed_instance_name },
-                user_data = (lambda path: open(path).read())(self.cloud_init_script()))
+                user_data = read_file_content(self.cloud_init_script()))
 
             aws.ec2.EipAssociation(f"associating-{hashed_instance_name}", instance_id = ec2_instance.id, allocation_id = eip.id)
             if is_true(generate_dns):

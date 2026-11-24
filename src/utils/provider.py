@@ -75,8 +75,8 @@ def get_provider_available_instances_config_by_region_zone(provider, region, zon
     if not len(zone_instances_configs)>0:
         raise HTTPError("instance_type_in_zone_not_found", 404, 'instance type in this zone not found', hdrs = {"i18n_code": "instance_type_in_zone_not_found"}, fp = None)
 
-    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if'disabled' not in instance.keys() or not instance['disabled'] and os.getenv(instance['price_variable'])]
-    return list(map(lambda instance: instance, filtered_instances))
+    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if'disabled' not in instance or not instance['disabled'] and os.getenv(instance['price_variable'])]
+    return list(filtered_instances)
 
 def get_provider_available_instances_by_region_zone(provider, region, zone):
     instances_configs = get_provider_infos(provider, 'instance_configs')
@@ -87,8 +87,8 @@ def get_provider_available_instances_by_region_zone(provider, region, zone):
     if not len(zone_instances_configs)>0:
         raise HTTPError("instance_type_in_zone_not_found", 404, 'instance type in this zone not found', hdrs = {"i18n_code": "instance_type_in_zone_not_found"}, fp = None)
 
-    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if 'disabled' not in instance.keys() or not instance['disabled'] and os.getenv(instance['price_variable'])]
-    return list(map(lambda instance: instance['type'], filtered_instances))
+    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if 'disabled' not in instance or not instance['disabled'] and os.getenv(instance['price_variable'])]
+    return [instance['type'] for instance in filtered_instances]
 
 def get_specific_config(provider, key, region, zone):
     config = None
@@ -97,7 +97,7 @@ def get_specific_config(provider, key, region, zone):
         if instance_config['region'] == region:
             for z in instance_config['zones']:
                 if z['name'] == zone:
-                    config = z[key] if key in z else None
+                    config = z.get(key, None)
                     break
 
     log_msg("INFO", "[provider][get_specific_config] provider = {}, key = {}, region = {}, zone = {} = > config = {}".format(provider, key, region, zone, config))
@@ -127,11 +127,11 @@ def get_provider_instances_pricing_by_region_zone(provider, region, zone):
     zone_instances_configs = [config for config in region_instances_configs[0]['zones'] if str(config['name']) == str(zone)]
     if not len(zone_instances_configs)>0:
         raise HTTPError("instance_type_in_zone_not_found", 404, 'instance type in this zone not found', hdrs = {"i18n_code": "instance_type_in_zone_not_found"}, fp = None)
-    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if 'disabled' not in instance.keys() or not instance['disabled'] and os.getenv(instance['price_variable'])]
-    return list(map(lambda instance: {
+    filtered_instances = [instance for instance in zone_instances_configs[0]['instance_types'] if 'disabled' not in instance or not instance['disabled'] and os.getenv(instance['price_variable'])]
+    return [{
         "name": instance['type'],
         "price": os.getenv(instance['price_variable'])
-    }, filtered_instances))
+    } for instance in filtered_instances]
 
 def extract_provider_name(driver):
     return driver.replace("Driver", "").lower()
@@ -151,5 +151,5 @@ def get_dns_providers():
     with open(config_path, "r") as stream:
         loaded_data = yaml.safe_load(stream)
         dns_zones = loaded_data['dns_zones']
-        result = list(set([extract_provider_name(dns_zone['driver']) for dns_zone in dns_zones]))
+        result = list({extract_provider_name(dns_zone['driver']) for dns_zone in dns_zones})
     return result

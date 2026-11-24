@@ -61,7 +61,7 @@ def create_bucket(provider, user_email, bucket_id, hashed_bucket_name, region, b
     ProviderDriver = getattr(ProviderDriverModule, get_driver(provider))
     result = ProviderDriver().create_bucket(user_email, hashed_bucket_name, region, bucket_type)
     log_msg("DEBUG", "[create_bucket] driver result = {}".format(result))
-    Bucket.update(bucket_id, result['endpoint'], result['user_id'] if "user_id" in result else None, result['access_key'], result['secret_key'], "active", db)
+    Bucket.update(bucket_id, result['endpoint'], result.get("user_id", None), result['access_key'], result['secret_key'], "active", db)
 
 access_key = os.getenv('SCW_ACCESS_KEY')
 secret_key = os.getenv('SCW_SECRET_KEY')

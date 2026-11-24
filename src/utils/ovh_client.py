@@ -15,7 +15,7 @@ ovh_client = ovh.Client(
 
 def find_registry_id_by_name(name):
     registries = ovh_client.get('/cloud/project/{}/containerRegistry'.format(service_name))
-    target_registry_id = [reg["id"] for reg in registries if reg['name'] == name][0]
+    target_registry_id = next(reg["id"] for reg in registries if reg['name'] == name)
     return target_registry_id
 
 def update_ovh_registry_credentials(name):

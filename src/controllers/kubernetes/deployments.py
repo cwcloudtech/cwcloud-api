@@ -46,7 +46,7 @@ def get_deployments(current_user: UserSchema, db):
 def create_new_deployment(current_user:UserSchema, deployment:DeploymentSchema, db):
     env: Environment = Environment.getById(deployment.env_id, db)
 
-    if not env and not env.type == "vm":
+    if not env and env.type != "vm":
         return JSONResponse(content = {
             'status': 'ko',
             'message': 'environment not found',
@@ -172,9 +172,9 @@ def get_deployment(current_user:UserSchema,deployment_id:int, db):
                 "started": container[1].started,
                 "restart_count": container[1].restart_count,
                 "state": {
-                    "running": True if container[1].state.running else False,
-                    "terminated": True if container[1].state.terminated else False,
-                    "waiting": True if container[1].state.waiting else False,
+                    "running": bool(container[1].state.running),
+                    "terminated": bool(container[1].state.terminated),
+                    "waiting": bool(container[1].state.waiting),
                 },
             })
 

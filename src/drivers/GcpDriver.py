@@ -21,6 +21,7 @@ from utils.firewall import get_firewall_tags
 from utils.gcp_client import _gcp_project_id, _google_app_cred_str, _google_app_credentials, update_credentials_policy_registry, delete_registry_service_account, delete_bucket_service_account, get_gcp_instance_name, update_bucket_keys, update_policy_and_credentials_bucket, update_registry_token, get_provider_dns_zone_domain_name, _gcp_project_id, _google_app_cred_str, _google_app_credentials
 from utils.logger import log_msg
 from utils.provider import get_provider_dns_zones
+from utils.file import read_file_content
 
 
 class GcpDriver(ProviderDriver):
@@ -75,7 +76,7 @@ class GcpDriver(ProviderDriver):
                 service_account = compute.InstanceServiceAccountArgs(
                     scopes = ["https://www.googleapis.com/auth/cloud-platform"],
                 ),
-                metadata_startup_script = (lambda path: open(path).read())(self.cloud_init_script()))
+                metadata_startup_script = read_file_content(self.cloud_init_script()))
 
             pulumi.export("public_ip", compute_instance.network_interfaces[0].access_configs[0].nat_ip)
             if is_true(generate_dns):

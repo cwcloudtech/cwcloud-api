@@ -34,7 +34,7 @@ def convert_imalive_metric_to_gauge(name, node, payload, key, labels):
             metric_name = sanitize_metric_name(f"imalive_{name}_{k}")
             metric_name_label = sanitize_metric_name(f"imalive_{name}_{node}_{k}")
             if metric_name not in imalive_gauges:
-                imalive_gauges[metric_name] = create_gauge(metric_name, f"imalive {name} {k}", list([*labels.keys(), 'name', 'kind']))
+                imalive_gauges[metric_name] = create_gauge(metric_name, f"imalive {name} {k}", [*labels.keys(), 'name', 'kind'])
             set_gauge(imalive_gauges[metric_name], disk.get(k, 0), {**labels, 'name': metric_name_label, 'kind': name})
 
 def ingest_imalive_payload(payload, user_id):
@@ -57,8 +57,8 @@ def ingest_imalive_payload(payload, user_id):
 
         if gauge_key not in imalive_gauges:
             imalive_gauges[gauge_key] = {
-                'result': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_result"), f"imalive {gauge_key} result", list([*base_monitor_labels.keys(), 'kind'])),
-                'duration': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_duration"), f"imalive {gauge_key} duration", list([*base_monitor_labels.keys(), 'kind']))
+                'result': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_result"), f"imalive {gauge_key} result", [*base_monitor_labels.keys(), 'kind']),
+                'duration': create_gauge(sanitize_metric_name(f"imalive_{gauge_key}_duration"), f"imalive {gauge_key} duration", [*base_monitor_labels.keys(), 'kind'])
             }
         value = 1 if get_or_else(payload, 'status', 'ko') == 'ok' else 0
         duration = get_or_else(payload, 'duration', 0)
@@ -81,7 +81,7 @@ def ingest_imalive_payload(payload, user_id):
             metric_name = "imalive_cpu_all"
             metric_name_label = sanitize_metric_name(f"imalive_cpu_all_{node_name}")
             if metric_name not in imalive_gauges:
-                imalive_gauges[metric_name] = create_gauge(metric_name, "imalive cpu percent all", list([*base_metric_labels.keys(), 'name', 'kind']))
+                imalive_gauges[metric_name] = create_gauge(metric_name, "imalive cpu percent all", [*base_metric_labels.keys(), 'name', 'kind'])
             set_gauge(imalive_gauges[metric_name], cpu['percent']['all'], {**base_metric_labels, 'name': metric_name_label, 'kind': 'cpu'})
 
 def check_status_code_pattern(actual_code, pattern):

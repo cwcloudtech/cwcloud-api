@@ -13,7 +13,6 @@ from utils.faas.vars import FAAS_API_MAX_RESULTS, FAAS_API_TOKEN, FAAS_API_URL
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.logger import log_msg
 
-global _scheduler
 _scheduler = BackgroundScheduler()
 _scheduler.start()
 
@@ -50,7 +49,7 @@ def handle_trigger(trigger):
 
         apscheduler_args = parse_crontab(trigger['content']['cron_expr'])
         log_msg("DEBUG", "[scheduler][reinit_crontabs] add this cron: name = {}, cron_expr = {}, apscheduler_args = {}".format(trigger['content']['name'], trigger['content']['cron_expr'], apscheduler_args))
-        _scheduler.add_job(lambda: invoke_function(trigger), CronTrigger(**apscheduler_args), id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)))
+        _scheduler.add_job(invoke_function, CronTrigger(**apscheduler_args), args = [trigger], id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)))
     elif trigger['kind'] == "schedule":
         if is_empty_key(trigger['content'], 'execution_time'):
             log_msg("WARN", "[scheduler][invoke_scheduled_functions] missing execution_time field, ignoring trigger = {}".format(trigger))
@@ -58,7 +57,7 @@ def handle_trigger(trigger):
         execution_time = parse(trigger['content']['execution_time'])
         if is_after_current_time(trigger['content']['execution_time']):
             log_msg("DEBUG", "[scheduler][invoke_scheduled_functions] Scheduling function for trigger: {}".format(trigger))
-            _scheduler.add_job(lambda: invoke_function(trigger), DateTrigger(run_date=execution_time), id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)), replace_existing=True)
+            _scheduler.add_job(invoke_function, DateTrigger(run_date=execution_time), args = [trigger], id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)), replace_existing=True)
 
 def init_triggered_functions():
     global _scheduler
@@ -96,7 +95,7 @@ def init_triggered_functions():
 
                 apscheduler_args = parse_crontab(trigger['content']['cron_expr'])
                 log_msg("DEBUG", "[scheduler][reinit_crontabs] add this cron: name = {}, cron_expr = {}, apscheduler_args = {}".format(trigger['content']['name'], trigger['content']['cron_expr'], apscheduler_args))
-                _scheduler.add_job(lambda: invoke_function(trigger), CronTrigger(**apscheduler_args), id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)))
+                _scheduler.add_job(invoke_function, CronTrigger(**apscheduler_args), args = [trigger], id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)))
             elif trigger['kind'] == "schedule":
                 if is_empty_key(trigger['content'], 'execution_time'):
                     log_msg("WARN", "[scheduler][invoke_scheduled_functions] missing execution_time field, ignoring trigger = {}".format(trigger))
@@ -105,6 +104,6 @@ def init_triggered_functions():
                 execution_time = parse(trigger['content']['execution_time'])
                 if is_after_current_time(trigger['content']['execution_time']):
                     log_msg("DEBUG", "[scheduler][invoke_scheduled_functions] Scheduling function for trigger: {}".format(trigger))
-                    _scheduler.add_job(lambda: invoke_function(trigger), DateTrigger(run_date=execution_time), id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)), replace_existing=True)
+                    _scheduler.add_job(invoke_function, DateTrigger(run_date=execution_time), args = [trigger], id = "{}-{}".format(trigger['content']['name'], generate_random_bytes(6)), replace_existing=True)
 
             start_index = start_index + 1

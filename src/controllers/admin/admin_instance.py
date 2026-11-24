@@ -128,7 +128,7 @@ def admin_add_instance(current_user, payload, provider, region, zone, environmen
                 'i18n_code': 'environment_not_found',
                 'cid': get_current_cid()
             }, status_code = 404)
-        if not email == current_user.email:
+        if email != current_user.email:
             from entities.User import User
             exist_user = User.getUserByEmail(email, db)
             if not exist_user:

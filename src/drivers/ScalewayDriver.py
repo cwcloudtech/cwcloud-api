@@ -16,6 +16,7 @@ from utils.dynamic_name import rehash_dynamic_name
 from utils.http import HTTP_REQUEST_TIMEOUT
 from utils.list import unmarshall_list_array
 from utils.logger import log_msg
+from utils.file import read_file_content
 
 SCW_API_URL = "https://api.scaleway.com"
 SCW_ACCESS_KEY = os.getenv('SCW_ACCESS_KEY')
@@ -120,7 +121,7 @@ class ScalewayDriver(ProviderDriver):
                 ip_id = instance_ip.id,
                 zone = region_zone,
                 user_data = {
-                    "cloud-init": (lambda path: open(path).read())(self.cloud_init_script())
+                    "cloud-init": read_file_content(self.cloud_init_script())
                 }
             )
 

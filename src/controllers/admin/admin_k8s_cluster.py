@@ -132,7 +132,7 @@ def get_cluster_infos(current_user, cluster_id, db):
         )
 
     except HTTPException as he:
-        raise he
+        raise
     except Exception as e:
         log_msg("ERROR", f"[get_cluster_infos] Failed to get cluster information: {str(e)}", True)
         return JSONResponse(

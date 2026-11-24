@@ -15,6 +15,10 @@ def quiet_remove(path):
     except FileNotFoundError as e:
         log_msg("WARN", "[quiet_remove] file {} doesn't exists".format(path))
 
+def read_file_content(path):
+    with open(path) as file:
+        return file.read()
+
 def create_cert_locally(file_name, file_content):
     with open(f"{file_name}.pem" , "w") as file:
         file.write(file_content)

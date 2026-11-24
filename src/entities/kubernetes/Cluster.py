@@ -37,7 +37,7 @@ class Cluster(Base):
 
     @staticmethod
     def getAll(db):
-        clusters = clusters = db.query(Cluster).join(KubeConfigFile).all()
+        clusters = db.query(Cluster).join(KubeConfigFile).all()
         return clusters
 
     @staticmethod

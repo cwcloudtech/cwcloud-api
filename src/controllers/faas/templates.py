@@ -23,6 +23,6 @@ def generate_template(payload: FunctionTemplate):
         'status': 'ok',
         'code': 200,
         'template': template.render(
-            args = ', '.join(list(map(lambda a: "{} string".format(a), payload.args))) if "go" == payload.language else ', '.join(payload.args)
+            args = ', '.join(["{} string".format(a) for a in payload.args]) if "go" == payload.language else ', '.join(payload.args)
         )
     }

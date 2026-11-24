@@ -9,7 +9,7 @@ from utils.common import is_not_empty_key
 from utils.file import create_cert_locally, delete_cert_locally
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    log_msg("DEBUG", "[on_connect] CONNACK received with code %s." % rc)
+    log_msg("DEBUG", "[on_connect] CONNACK received with code {}.".format(rc))
 
 def on_publish(client, userdata, mid, properties=None):
     log_msg("DEBUG", "[on_publish] mid: {}".format(str(mid)))

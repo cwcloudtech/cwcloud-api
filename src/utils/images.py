@@ -6,7 +6,7 @@ from utils.logger import log_msg
 def get_image_from_region_zone(images, region_zone):
     obj = None
     for image in images:
-        for image_region_zone in image.keys():
+        for image_region_zone in image:
             if image_region_zone == region_zone:
                 obj = image
                 break;

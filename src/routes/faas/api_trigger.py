@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
-from typing import Annotated
+from typing import Annotated, Optional
 
 from middleware.faasapi_guard import faasapi_required
 from database.postgres_db import get_db
@@ -47,7 +47,7 @@ def find_trigger_by_id(id: str, response: Response, current_user: Annotated[User
         return result['entity']
 
 @router.get("/triggers")
-def find_my_triggers(response: Response, current_user: Annotated[UserSchema, Depends(faasapi_required)], kind: str = None, start_index: int = 0, max_results: int = 10, db: Session = Depends(get_db)):
+def find_my_triggers(response: Response, current_user: Annotated[UserSchema, Depends(faasapi_required)], kind: Optional[str] = None, start_index: int = 0, max_results: int = 10, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET, Action.ALL)):
         increment_counter(_counter, Method.GET, Action.ALL)
         results = get_my_triggers(db, current_user, kind, start_index, max_results)

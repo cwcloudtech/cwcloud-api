@@ -1,6 +1,6 @@
 import json
 
-from typing import Literal, Annotated
+from typing import Literal, Annotated, Optional
 from pydantic import Json
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Form, UploadFile, File, Depends, WebSocket, WebSocketDisconnect
@@ -111,7 +111,7 @@ def get_template_values(current_user: Annotated[UserSchema, Depends(admin_requir
         return get_chart_values(kind)
 
 @router.websocket("/cluster/{cluster_id}/pods/{pod_name}/logs/ws")
-async def websocket_pod_logs(websocket: WebSocket, cluster_id: int, pod_name: str, namespace: str, container_name: str = None, tail_lines: int = 100, db: Session = Depends(get_db), current_user: User = Depends(admin_required_ws)):
+async def websocket_pod_logs(websocket: WebSocket, cluster_id: int, pod_name: str, namespace: str, container_name: Optional[str] = None, tail_lines: int = 100, db: Session = Depends(get_db), current_user: User = Depends(admin_required_ws)):
     subproto = getattr(websocket.state, "ws_subprotocol", None)
     await websocket.accept(subprotocol=subproto)
 
@@ -130,7 +130,7 @@ async def websocket_pod_logs(websocket: WebSocket, cluster_id: int, pod_name: st
         log_msg("INFO", f"WebSocket disconnected: pod={pod_name}")
 
 @router.websocket("/cluster/{cluster_id}/pods/{pod_name}/terminal/ws")
-async def websocket_pod_terminal(websocket: WebSocket, cluster_id: int, pod_name: str, namespace: str, container_name: str = None, db: Session = Depends(get_db), current_user: User = Depends(admin_required_ws)):
+async def websocket_pod_terminal(websocket: WebSocket, cluster_id: int, pod_name: str, namespace: str, container_name: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(admin_required_ws)):
     subproto = getattr(websocket.state, "ws_subprotocol", None)
     await websocket.accept(subprotocol=subproto)
     try:

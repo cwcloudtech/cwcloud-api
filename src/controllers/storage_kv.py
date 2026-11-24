@@ -11,6 +11,7 @@ from database.redis_db import redis_client
 from utils.common import is_empty, is_not_empty
 from utils.observability.cid import get_current_cid
 from utils.redis import create_redis_key, get_redis_keys_for_user
+from typing import Optional
 
 def _store_with_ttl(user_id, key, payload, ttl, db):
     StorageKV.deleteUserStorageKV(user_id, key, db)
@@ -153,7 +154,7 @@ def get_kv(current_user: UserSchema, key: str, db):
         'ttl': None
     }, status_code = 200)
 
-def get_all_kvs(current_user: UserSchema, search: str = None, start_index: int = 0, max_results: int = 20, db = None):
+def get_all_kvs(current_user: UserSchema, search: Optional[str] = None, start_index: int = 0, max_results: int = 20, db = None):
     user_id = current_user.id
     if search and search.strip():
         storage_kvs = StorageKV.searchUserStorageKVsByKey(user_id, search, db)
@@ -179,7 +180,7 @@ def get_all_kvs(current_user: UserSchema, search: str = None, start_index: int =
     for item in redis_results:
         combined_results[item['key']] = item
 
-    sorted_results = sorted(list(combined_results.values()), key=lambda x: x['key'])
+    sorted_results = sorted(combined_results.values(), key=lambda x: x['key'])
     total_count = len(sorted_results)
     paginated_results = sorted_results[start_index:start_index + max_results]
     

@@ -43,10 +43,9 @@ def looks_like_gibberish(text: str) -> bool:
                 vowels = sum(ch.lower() in "aeiouy" for ch in t)
                 alpha = sum(ch.isalpha() for ch in t)
                 # Very low vowels in a short Latin token often indicates randomness.
-                if alpha >= 6 and vowels / max(1, alpha) < 0.15:
-                    # Entropy check to avoid rejecting valid short words like "rhythm"
-                    if shannon_entropy(t) > 3.2:
-                        return True, "gibberish"
+                # Entropy check to avoid rejecting valid short words like "rhythm"
+                if alpha >= 6 and vowels / max(1, alpha) < 0.15 and shannon_entropy(t) > 3.2:
+                    return True, "gibberish"
 
         # default: do not reject short messages
         return False, "message_acceptable"

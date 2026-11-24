@@ -18,7 +18,7 @@ EMAIL_ADAPTER = get_adapter("emails")
 DEFAULT_EMAIL_ADAPTER = get_default_adapter("emails")
 
 _CACHE_ADAPTER = get_adapter('cache')
-_TTL_CONTACT_FORM = int(os.getenv('TTL_CONTACT_FORM', 30))
+_TTL_CONTACT_FORM = int(os.getenv('TTL_CONTACT_FORM', '30'))
 _CONTACT_COPYRIGHT_NAME_FOOTER = os.getenv('CONTACT_COPYRIGHT_NAME_FOOTER', 'CWCloud')
 _CONTACT_FOOTER_LOGO = os.getenv('CONTACT_FOOTER_LOGO', 'https://assets.cwcloud.tech/assets/logos/cwcloud-gold.png')
 

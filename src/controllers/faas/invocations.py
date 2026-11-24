@@ -373,7 +373,7 @@ def get_all_invocations(db, current_user, start_index, max_results):
         'code': 200,
         'start_index': start_index,
         'max_results': max_results,
-        'results': list(map(lambda i: {
+        'results': [{
             "id": i.id,
             "content": i.content,
             "created_at": i.created_at,
@@ -382,5 +382,5 @@ def get_all_invocations(db, current_user, start_index, max_results):
                 "id": i.invoker_id,
                 "username": get_email_invoker(i, db)
             }
-        }, results))
+        } for i in results]
     }

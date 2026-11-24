@@ -287,7 +287,7 @@ def get_all_triggers(db, current_user, kind, start_index, max_results):
         'code': 200,
         'start_index': start_index,
         'max_results': max_results,
-        'results': list(map(lambda t: {
+        'results': [{
             "id": t.id,
             "kind": t.kind,
             "content": t.content,
@@ -297,7 +297,7 @@ def get_all_triggers(db, current_user, kind, start_index, max_results):
                 "id": t.owner_id,
                 "username": get_email_owner(t, db)
             }
-        }, results))
+        } for t in results]
     }
 
 def clear_my_triggers(current_user, db):

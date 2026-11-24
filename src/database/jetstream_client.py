@@ -6,6 +6,7 @@ from utils.consumer import CONSUMER_SLEEP_TIME
 from utils.eventloop import get_event_loop
 from utils.logger import log_msg
 from utils.nats import close_nats, get_creds_file_if_exists, get_nats_url
+import sys
 
 class JetstreamClient():
     async def stream(self, group, channel):
@@ -27,7 +28,7 @@ class JetstreamClient():
         finally:
             await close_nats(_nc)
             log_msg("DEBUG", "[JetstreamClient][aconsume] Shutdown...")
-            exit(1)
+            sys.exit(1)
 
     def publish(self, group, channel, payload):
         asyncio.run(self.apublish(group, channel, payload))

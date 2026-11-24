@@ -198,7 +198,7 @@ def get_project(current_user, projectId, db):
         if project.type == "vm":
             playbooks = get_gitlab_project_playbooks(project.id, project.gitlab_host, project.access_token)
             instancesJson = json.loads(json.dumps(project.instances, cls = AlchemyEncoder))
-            filteredInstances = [instance for instance in instancesJson if not instance[ 'status'] == "deleted"]
+            filteredInstances = [instance for instance in instancesJson if instance['status'] != "deleted"]
             project_response = {**projectJson, "playbooks": playbooks, "instances": filteredInstances}
         else:
             deployments = Deployment.getAllByProject(project.id, db)
@@ -274,7 +274,7 @@ def get_project_by_name(current_user, project_name, db):
         playbooks = get_gitlab_project_playbooks(project.id, project.gitlab_host, project.access_token)
         projectJson = json.loads(json.dumps(project, cls = AlchemyEncoder))
         instancesJson = json.loads(json.dumps(project.instances, cls = AlchemyEncoder))
-        filteredInstances = [instance for instance in instancesJson if not instance[ 'status'] == "deleted"]
+        filteredInstances = [instance for instance in instancesJson if instance['status'] != "deleted"]
         project_response = {**projectJson, "playbooks": playbooks, "instances": filteredInstances}
 
         return JSONResponse(content = project_response, status_code = 200)
@@ -338,7 +338,7 @@ def get_project_by_url(current_user, project_url, db):
         playbooks = get_gitlab_project_playbooks(project.id, project.gitlab_host, project.access_token)
         projectJson = json.loads(json.dumps(project, cls = AlchemyEncoder))
         instancesJson = json.loads(json.dumps(project.instances, cls = AlchemyEncoder))
-        filteredInstances = [instance for instance in instancesJson if not instance[ 'status'] == 'deleted']
+        filteredInstances = [instance for instance in instancesJson if instance['status'] != 'deleted']
         project_response = {**projectJson, "playbooks": playbooks, "instances": filteredInstances}
 
         return JSONResponse(content = project_response, status_code = 200)

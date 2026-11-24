@@ -226,7 +226,7 @@ def get_all_functions(db, current_user, start_index, max_results):
         'code': 200,
         'start_index': start_index,
         'max_results': max_results,
-        'results': list(map(lambda f: {
+        'results': [{
             "id": f.id,
             "is_public": f.is_public,
             "content": f.content,
@@ -236,7 +236,7 @@ def get_all_functions(db, current_user, start_index, max_results):
                 "id": f.owner_id,
                 "username": get_email_owner(f, db)
             }
-        }, results))
+        } for f in results]
     }
     
 def export_function(id, db):

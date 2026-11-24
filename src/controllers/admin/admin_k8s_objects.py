@@ -24,6 +24,7 @@ from utils.kubernetes.object import generate_object
 from utils.kubernetes.object import clear_metadata
 from utils.common import convert_dict_keys_to_camel_case, is_empty
 from utils.observability.cid import get_current_cid
+from typing import Optional
 
 def get_cluster_configfile(current_user: UserSchema, cluster_id: int, db: Session):
     cluster: Cluster = Cluster.getById(cluster_id, db)
@@ -420,7 +421,7 @@ async def get_pod_logs_stream(websocket: WebSocket, current_user: UserSchema, po
         if websocket.application_state == WebSocketState.CONNECTED:
             await websocket.close()
 
-async def get_pod_terminal_stream(websocket: WebSocket, current_user: UserSchema, cluster_id: int, pod_name: str, namespace: str, container_name: str = None, db: Session = None):
+async def get_pod_terminal_stream(websocket: WebSocket, current_user: UserSchema, cluster_id: int, pod_name: str, namespace: str, container_name: Optional[str] = None, db: Session = None):
     try:
         cluster: Cluster = Cluster.getById(cluster_id, db)
         if not cluster:

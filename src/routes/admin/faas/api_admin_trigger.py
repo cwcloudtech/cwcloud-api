@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
-from typing import Annotated
+from typing import Annotated, Optional
 
 from middleware.auth_guard import admin_required
 from database.postgres_db import get_db
@@ -20,7 +20,7 @@ _span_prefix = "adm-faas-trigger"
 _counter = create_counter("adm_faas_trigger_api", "Admin trigger API counter")
 
 @router.get("/triggers")
-def find_all_triggers(response: Response, current_user: Annotated[UserSchema, Depends(admin_required)], kind: str = None, start_index: int = 0, max_results: int = 10, db: Session = Depends(get_db)):
+def find_all_triggers(response: Response, current_user: Annotated[UserSchema, Depends(admin_required)], kind: Optional[str] = None, start_index: int = 0, max_results: int = 10, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET, Action.ALL)):
         increment_counter(_counter, Method.GET, Action.ALL)
         results = get_all_triggers(db, current_user, kind, start_index, max_results)

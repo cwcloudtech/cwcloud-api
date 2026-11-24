@@ -16,6 +16,7 @@ from utils.dynamic_name import rehash_dynamic_name
 from utils.logger import log_msg
 from utils.ovh_client import create_custom_dns_record, create_ovh_bucket, delete_ovh_bucket, delete_ovh_dns_record, list_ovh_dns_records, update_ovh_bucket_credentials, update_ovh_registry_credentials, ovh_client
 from utils.list import unmarshall_list_array
+from utils.file import read_file_content
 
 def get_openstack_connection(region):
     os_auth_url = os.getenv('OS_AUTH_URL')
@@ -26,12 +27,12 @@ def get_openstack_connection(region):
 
     con = connection.Connection(
         region_name = region,
-        auth = dict(
-            auth_url = os_auth_url,
-            username = os_username,
-            password = os_password,
-            project_name = os_project_name,
-            domain_name = os_domain_name),
+        auth = {
+            'auth_url': os_auth_url,
+            'username': os_username,
+            'password': os_password,
+            'project_name': os_project_name,
+            'domain_name': os_domain_name},
         compute_api_version = '2')
     return con
 
@@ -92,7 +93,7 @@ class OvhDriver(ProviderDriver):
                 image_id = ami_image,
                 name = hashed_instance_name,
                 networks = [ _inputs.InstanceNetworkArgs(name = ext_network["name"], uuid = ext_network["id"])],
-                user_data = (lambda path: open(path).read())(self.cloud_init_script())
+                user_data = read_file_content(self.cloud_init_script())
             )
 
             if generate_dns == "true":

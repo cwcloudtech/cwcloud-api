@@ -1,8 +1,9 @@
+from typing import ClassVar
 from unittest import TestCase
 from utils.security import check_password, is_not_email_valid, random_password
 
 class TestSecurity(TestCase):
-    TEST_PASSWORDS = {
+    TEST_PASSWORDS: ClassVar[dict] = {
         'valid': {
             'value': 'ValidPass123$',
             'expected_status': True,

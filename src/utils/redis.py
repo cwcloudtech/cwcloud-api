@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from database.redis_db import redis_client
 from utils.logger import log_msg
+from typing import Optional
 
 def create_redis_key(user_id: int, key: str) -> str:
     combined_key = f"{user_id}_{key}"
@@ -13,7 +14,7 @@ def create_user_redis_pattern(user_id: int) -> str:
     encoded_prefix = base64.b64encode(prefix.encode('utf-8')).decode('utf-8')
     return f"{encoded_prefix}*"
 
-def get_redis_keys_for_user(user_id: int, search: str = None):
+def get_redis_keys_for_user(user_id: int, search: Optional[str] = None):
     pattern = create_user_redis_pattern(user_id)
     redis_results = []
 

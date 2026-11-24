@@ -59,7 +59,7 @@ def handle_instance_error_creation(request: Request, bt: BackgroundTasks, instan
 
         server_state = server["state"]
 
-        if not server_state == "running" and not server_state == "stopped":
+        if server_state != "running" and server_state != "stopped":
             return JSONResponse(content = {
                 'status': 'ko',
                 'error': "You can't delete the instance while it is {}".format(server_state),
@@ -122,7 +122,7 @@ def update_instance(request: Request, instance_id: str, payload: ControlUpdateIn
 
         target_server_id = server["id"]
 
-        if not action == "activate":
+        if action != "activate":
             return JSONResponse(content = {
                 'status': 'ko',
                 'error': "This action doesn't exist",

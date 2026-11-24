@@ -7,6 +7,7 @@ from utils.eventloop import get_event_loop
 
 from utils.logger import log_msg
 from utils.nats import close_nats, get_creds_file_if_exists, get_nats_url
+import sys
 
 class NatsClient():
     async def connect(self):
@@ -26,7 +27,7 @@ class NatsClient():
         finally:
             await close_nats(_nc)
             log_msg("DEBUG", "[NatsClient][aconsume] Shutdown...")
-            exit(1)
+            sys.exit(1)
 
     def publish(self, channel, payload):
         asyncio.run(self.apublish(channel, payload))

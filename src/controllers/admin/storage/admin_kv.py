@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from binascii import Error as Base64Error
 from fastapi.responses import JSONResponse
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from entities.StorageKV import StorageKV
 from entities.User import User
@@ -15,7 +15,7 @@ from utils.logger import log_msg
 from utils.observability.cid import get_current_cid
 from utils.redis import create_redis_key, get_redis_keys_for_user
 
-def get_redis_keys_all_users(search: str = None):
+def get_redis_keys_all_users(search: Optional[str] = None):
     redis_results = []
     user_cache = {}
     
@@ -103,13 +103,13 @@ def populate_user_emails(results: List[Dict], user_cache: Dict, db):
         if 'user_id' in result:
             result['user_email'] = user_cache.get(result['user_id'], "Unknown")
 
-def get_all_storage_kvs(search: str = None, start_index: int = 0, max_results: int = 20, db = None):
+def get_all_storage_kvs(search: Optional[str] = None, start_index: int = 0, max_results: int = 20, db = None):
     if search and search.strip():
         storage_kvs = StorageKV.searchStorageKVsByKey(search, db)
     else:
         storage_kvs = db.query(StorageKV).limit(1000).all()
 
-    user_ids = list(set(kv.user_id for kv in storage_kvs))
+    user_ids = list({kv.user_id for kv in storage_kvs})
     users_dict = {}
     if user_ids:
         users = db.query(User).filter(User.id.in_(user_ids)).all()
@@ -147,7 +147,7 @@ def get_all_storage_kvs(search: str = None, start_index: int = 0, max_results: i
         'max_results': max_results
     }, status_code = 200)
 
-def get_user_storage_kvs(user_id: int, search: str = None, start_index: int = 0, max_results: int = 20, db = None):
+def get_user_storage_kvs(user_id: int, search: Optional[str] = None, start_index: int = 0, max_results: int = 20, db = None):
     user = db.query(User).filter(User.id == user_id).first()
     if is_empty(user):
         return JSONResponse(content = {

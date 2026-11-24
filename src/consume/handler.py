@@ -1,4 +1,5 @@
 import re
+import asyncio
 import requests
 
 from jinja2 import Environment, FileSystemLoader, BaseLoader, select_autoescape
@@ -71,7 +72,7 @@ async def handle(msg):
     function_id = payload['content']['function_id']
     function_url = "{}/function/{}".format(_api_endpoint, function_id)
     log_msg("DEBUG", "[consume][handle] getting function_url = {}".format(function_url))
-    r_serverless_function = requests.get(function_url, headers =_headers, timeout=HTTP_REQUEST_TIMEOUT)
+    r_serverless_function = await asyncio.to_thread(requests.get, function_url, headers =_headers, timeout=HTTP_REQUEST_TIMEOUT)
     if r_serverless_function.status_code != 200:
       error_invocation(invocation_id, payload, "the function {} is not found".format(function_id))
       return
@@ -107,7 +108,7 @@ async def handle(msg):
       ext = get_ext_from_language(language)
       function_file_path = "{}/{}.{}".format(_functions_file_path, invocation_id, ext)
       log_msg("DEBUG", "[consume][handle] write function file : {}".format(function_file_path))
-      with open(function_file_path, 'w') as function_file:
+      with open(function_file_path, 'w') as function_file: # noqa: ASYNC230 (small local file, written once per invocation)
         template = _env.get_template("main.{}.j2".format(ext))
 
         function_with_args_tpl = "handle({})"

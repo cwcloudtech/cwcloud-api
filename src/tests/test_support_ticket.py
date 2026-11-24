@@ -110,7 +110,7 @@ class TestSupportTicket(TestCase):
         for attr, value in attributes.items():
             setattr(ticket_mock, attr, value)
 
-        ticket_mock.__dir__ = lambda self: [k for k in attributes.keys()]
+        ticket_mock.__dir__ = lambda self: list(attributes)
         mock_get_tickets.return_value = [ticket_mock]
 
         # When
@@ -140,7 +140,7 @@ class TestSupportTicket(TestCase):
         for attr, value in user_attributes.items():
             setattr(user_mock, attr, value)
 
-        user_mock.__dir__ = lambda self: [k for k in user_attributes.keys()]
+        user_mock.__dir__ = lambda self: list(user_attributes)
 
         ticket_mock = Mock(spec=SupportTicket)
         ticket_mock.__class__ = Mock(spec=DeclarativeMeta)
@@ -165,7 +165,7 @@ class TestSupportTicket(TestCase):
         for attr, value in ticket_attributes.items():
             setattr(ticket_mock, attr, value)
 
-        ticket_mock.__dir__ = lambda self: [k for k in ticket_attributes.keys()]
+        ticket_mock.__dir__ = lambda self: list(ticket_attributes)
 
         reply_mock = Mock(spec=SupportTicketLog)
         reply_mock.__class__ = Mock(spec=DeclarativeMeta)
@@ -186,7 +186,7 @@ class TestSupportTicket(TestCase):
         for attr, value in reply_attributes.items():
             setattr(reply_mock, attr, value)
 
-        reply_mock.__dir__ = lambda self: [k for k in reply_attributes.keys()]
+        reply_mock.__dir__ = lambda self: list(reply_attributes)
 
         attachment_mock = Mock(spec=SupportTicketAttachment)
         attachment_attributes = {
@@ -200,7 +200,7 @@ class TestSupportTicket(TestCase):
         for attr, value in attachment_attributes.items():
             setattr(attachment_mock, attr, value)
 
-        attachment_mock.__dir__ = lambda self: [k for k in attachment_attributes.keys()]
+        attachment_mock.__dir__ = lambda self: list(attachment_attributes)
 
         mock_get_ticket.return_value = ticket_mock
         mock_get_logs.return_value = [reply_mock]

@@ -45,7 +45,7 @@ def slack_message(log_level, message, is_public):
         try:
             requests.post(SLACK_WEBHOOK_TPL.format(token), json=data, timeout=HTTP_REQUEST_TIMEOUT)
         except Exception as e:
-            logging.warning("[slack_message] unexpected exception: {}".format(e))
+            _root_logger.warning("[slack_message] unexpected exception: {}".format(e))
 
 def discord_message(log_level, message, is_public):
     token = _discord_token
@@ -59,7 +59,7 @@ def discord_message(log_level, message, is_public):
         try:
             requests.post(DISCORD_WEBHOOK_TPL.format(token), json=data, timeout=HTTP_REQUEST_TIMEOUT)
         except Exception as e:
-            logging.warning("[discord_message] unexpected exception: {}".format(e))
+            _root_logger.warning("[discord_message] unexpected exception: {}".format(e))
 
 def is_level_partof(level, levels):
     return any(log == "{}".format(level).lower() for log in levels)
@@ -102,6 +102,8 @@ elif is_error(LOG_LEVEL):
 else:
     logging.basicConfig(stream = sys.stdout, level = "INFO")
 
+_root_logger = logging.getLogger()
+
 def quiet_log_msg (log_level, message):
     vdate = datetime.now().isoformat()
     cid = get_current_cid()
@@ -117,13 +119,13 @@ def quiet_log_msg (log_level, message):
             formatted_log = json.dumps({"body": message, "level": log_level, "time": vdate, "cid": cid })
 
     if is_debug(log_level):
-        logging.debug(formatted_log)
+        _root_logger.debug(formatted_log)
     elif is_warn(log_level):
-        logging.warning(formatted_log)
+        _root_logger.warning(formatted_log)
     elif is_error(log_level):
-        logging.error(formatted_log)
+        _root_logger.error(formatted_log)
     else:
-        logging.info(formatted_log)
+        _root_logger.info(formatted_log)
 
     return formatted_log
 

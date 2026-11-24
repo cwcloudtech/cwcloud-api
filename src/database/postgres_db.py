@@ -18,7 +18,7 @@ postgres_max_overflow = get_env_int("POSTGRES_MAX_OVERFLOW", 10)
 postgres_pool_timeout = get_env_int("POSTGRES_POOL_TIMEOUT", 30)
 postgres_pool_recycle = get_env_int("POSTGRES_POOL_RECYCLE", 1800)
 
-POSTGRES_URL = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db_name}"
+POSTGRES_URL = f"postgresql+psycopg2://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db_name}"
 
 dbEngine = create_engine(
     POSTGRES_URL,
@@ -41,9 +41,9 @@ def get_db():
         yield db
     except CwHTTPException as cwe:
         log_msg("WARN", f"[get_db] unexpected CwHTTPException: e.msg = {cwe.message}, e.status_code = {cwe.status_code}")
-        raise cwe
+        raise
     except Exception as e:
         log_msg("ERROR", f"[get_db] unexpected error: e.type = {type(e).__name__}, e.file = {__file__}, e.lno = {e.__traceback__.tb_lineno}, e.msg={str(e)}")
-        raise e
+        raise
     finally:
         db.close()

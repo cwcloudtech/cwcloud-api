@@ -8,6 +8,9 @@ services:
       target: api
       cache_from: &cwcloud_cache
         - type=registry,ref=${CI_REGISTRY}/cwcloud-api:${VERSION}
+        - type=registry,ref=${CI_REGISTRY}/cwcloud-api:${EDITION}-cache
+      cache_to: &cwcloud_cache_to
+        - type=inline
 
   comwork_cloud_consumer:
     restart: always
@@ -17,6 +20,7 @@ services:
       dockerfile: ./Dockerfile
       target: consumer
       cache_from: *cwcloud_cache
+      cache_to: *cwcloud_cache_to
 
   comwork_cloud_scheduler:
     restart: always
@@ -26,6 +30,7 @@ services:
       dockerfile: ./Dockerfile
       target: scheduler
       cache_from: *cwcloud_cache
+      cache_to: *cwcloud_cache_to
 
   comwork_cloud_tests:
     image: ${CI_REGISTRY}/cwcloud-tests:${VERSION}

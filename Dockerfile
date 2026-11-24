@@ -1,8 +1,11 @@
-ARG PYTHON_VERSION=3.13.1-alpine3.21
+# syntax=docker/dockerfile:1
+ARG PYTHON_VERSION=3.14-alpine3.23
 ARG FLYWAYDB_VERSION=9.20-alpine
 
 # Base image
-FROM python:${PYTHON_VERSION} as api
+FROM python:${PYTHON_VERSION} AS api
+
+ARG PULUMI_VERSION=3.266.0
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -12,35 +15,39 @@ ENV PYTHONUNBUFFERED=1 \
     LISTEN_ADDR="0.0.0.0" \
     PATH="/root/.pulumi/bin:${PATH}" \
     WAIT_TIME=10 \
+    UV_SYSTEM_PYTHON=1 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ROOT_USER_ACTION=ignore \
     TRIVY_DISABLE_VEX_NOTICE=true
 
 WORKDIR /app
 
+# System packages (rarely change, kept in their own cached layer)
 RUN apk add --no-cache gcc python3-dev --virtual .build-deps && \
     apk add --no-cache bash tzdata git curl libpq-dev musl-dev linux-headers libx11 xvfb libxrender libxext fontconfig && \
     echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
     echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
     apk update && \
     apk upgrade && \
-    apk add --no-cache sqlite-libs xz-libs --upgrade || true && \
-    curl -fsSL https://get.pulumi.com | PULUMI_VERSION=v3.170.0 sh && \
-    rm -rf /root/.pulumi/plugins/* || true && \
-    /root/.pulumi/bin/pulumi plugin install resource aws --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource azure-native --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource gcp --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource openstack --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource ovh --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource scaleway --exact || true && \
-    /root/.pulumi/bin/pulumi plugin install resource cloudflare --exact || true
+    apk add --no-cache sqlite-libs xz-libs --upgrade || true
+
+# Pulumi CLI and providers plugins (in parallel)
+RUN curl -fsSL https://get.pulumi.com | sh -s -- --version "${PULUMI_VERSION}" && \
+    rm -rf /root/.pulumi/plugins/* && \
+    for plugin in aws gcp openstack ovh scaleway cloudflare; do \
+      (pulumi plugin install resource "${plugin}" --exact || echo "[warn] pulumi plugin ${plugin} not installed") & \
+    done; \
+    wait
 
 COPY ./requirements.txt /app/requirements.txt
 
-RUN find . -name '*.pyc' -type f -delete && \
-    pip install --upgrade pip && \
-    pip install --no-cache-dir --force-reinstall "Pillow>=11.3.0" && \
-    pip install --no-cache-dir -r requirements.txt && \
-    apk del .build-deps && \
-    rm -rf *.tgz
+# Python dependencies: uv installs wheels in parallel (much faster than pip)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    pip install --no-cache-dir --upgrade pip uv && \
+    uv pip install -r requirements.txt && \
+    apk del .build-deps
 
 COPY . /app/
 
@@ -49,12 +56,12 @@ EXPOSE 5000
 CMD ["python", "src/app.py"]
 
 # Scheduler image
-FROM api as scheduler
+FROM api AS scheduler
 
 CMD ["python", "src/scheduler.py"]
 
 # Consumer image
-FROM api as consumer
+FROM api AS consumer
 
 RUN mkdir -p /functions && \
     apk add --no-cache nodejs jq && \

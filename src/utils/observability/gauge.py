@@ -10,7 +10,9 @@ _numeric_value_pattern = r"-?\d+\.?\d*"
 _current_gauge_values = {}
 _current_gauge_labels = {}
 
-def create_gauge(name, description, labels = []):
+def create_gauge(name, description, labels = None):
+    if labels is None:
+        labels = []
     name = sanitize_metric_name(name)
     _current_gauge_values[name] = 0.0
 
@@ -32,7 +34,9 @@ def create_gauge(name, description, labels = []):
         description
     )
 
-def set_gauge(gauge, value, labels = {}):
+def set_gauge(gauge, value, labels = None):
+    if labels is None:
+        labels = {}
     match = re.search(_numeric_value_pattern, "{}".format(value))
 
     if match:

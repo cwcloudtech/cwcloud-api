@@ -11,6 +11,7 @@ from jinja2 import Environment, FileSystemLoader, Template, select_autoescape
 
 from schemas.Kubernetes import ExternalChart
 
+from utils.file import read_file_content
 from utils.gitlab import GIT_HELMCHARTS_REPO_URL, push_files_to_repository, GIT_DEFAULT_TOKEN, GIT_USERNAME
 from utils.observability.cid import get_current_cid
 from utils.common import AUTOESCAPE_EXTENSIONS
@@ -62,7 +63,7 @@ def push_charts(
                     charts_files.append(
                         {
                             "path": path_tpl.format(new_root, file),
-                            "content": open(path_tpl.format(root, file), "r").read(),
+                            "content": read_file_content(path_tpl.format(root, file)),
                         }
                     )
             else:

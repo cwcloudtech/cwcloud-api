@@ -137,7 +137,7 @@ def verify_u2f(current_user: Annotated[UserSchema, Depends(pre_token_required)],
             key_id = code[0:12]
             user2faMethod = Mfa.getUserMfaMethod(current_user.id, "security_key", db)
 
-            if not key_id == user2faMethod.otp_code:
+            if key_id != user2faMethod.otp_code:
                 return JSONResponse(content = {
                     'status': 'ko',
                     'error': 'Invalid code',
@@ -244,7 +244,7 @@ def post(current_user: Annotated[UserSchema, Depends(pre_token_required)], paylo
             }, status_code = 404)
 
         otp = pyotp.TOTP(user2faMethod.otp_code)
-        if not str(otp.now()) == str(code):
+        if str(otp.now()) != str(code):
             return JSONResponse(content = {
                 'status': 'ko',
                 'error': '2fa authentification failed',

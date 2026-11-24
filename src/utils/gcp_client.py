@@ -150,7 +150,7 @@ def update_policy_and_credentials_bucket(hashed_bucket_name, bucket_type):
     if bucket is None:
         error_msg = "Bucket not found : project_id = {}, hashed_bucket_name = {}".format(_gcp_project_id, hashed_bucket_name)
         log_msg("ERROR", error_msg)
-        raise Exception(error_msg)
+        raise RuntimeError(error_msg)
 
     if bucket_type == "public-read":
         iam_configuration = bucket.iam_configuration
@@ -209,7 +209,6 @@ def update_bucket_keys(hashed_bucket_name):
             access_id = hmac_key.access_id
 
     delete_old_bucket_keys(access_id)
-    hmac_key.access_id
     hmac_key, secret = storage_client.create_hmac_key(
         service_account_email = service_account_email, project_id = _gcp_project_id
     )

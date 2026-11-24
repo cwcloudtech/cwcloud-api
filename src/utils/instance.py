@@ -118,9 +118,8 @@ def clean_up_ansible_config_files():
 
 def write_ansible_file_content(filename, data):
     envFile = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', 'ansible', filename))
-    file = open(envFile, "w")
-    file.write(data)
-    file.close()
+    with open(envFile, "w") as file:
+        file.write(data)
 
 def prepare_ansible_config_files(env, args: dict):
     create_dir_if_not_exists(os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', 'ansible')))
@@ -202,9 +201,8 @@ def config_cloud_init(instance_id, instance_name, user_project, gitlab_project_n
     }
 
     cloudInitPath = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', cloud_init_script))
-    file = open(cloudInitPath, "w")
-    file.write(template.render(data))
-    file.close()
+    with open(cloudInitPath, "w") as file:
+        file.write(template.render(data))
 
 def delete_instance(hash, instanceName, environment, retry = 0):
     try:

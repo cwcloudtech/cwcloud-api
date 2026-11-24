@@ -22,4 +22,4 @@ def generate_functional_ex():
 def generate_technical_ex():
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET, Action.TECH)):
         increment_counter(_counter, Method.GET, Action.TECH)
-        raise Exception("technical error test")
+        raise RuntimeError("technical error test")
