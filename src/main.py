@@ -14,6 +14,7 @@ from database.postgres_db import Base
 from utils.common import get_env_bool
 from utils.logger import log_msg
 from utils.observability.monitor import monitors
+from utils.pulumi_state import start_pulumi_state_upgrade
 from utils.observability.cid import get_current_cid
 from utils.observability.metrics import metrics
 from utils.observability.otel import init_otel_metrics, init_otel_tracer, init_otel_logger
@@ -51,6 +52,7 @@ init_otel_metrics()
 init_otel_logger()
 metrics()
 monitors()
+start_pulumi_state_upgrade()
 
 instrumentator.instrument(app, metric_namespace='cwcloudapi', metric_subsystem='cwcloudapi')
 instrumentator.expose(app, endpoint='/v1/metrics')
