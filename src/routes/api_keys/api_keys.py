@@ -73,6 +73,24 @@ def get_api_keys(current_user: Annotated[UserSchema, Depends(get_current_active_
             'api_keys': keys
         }, status_code = 200)
 
+@router.get("/{key_id}/value")
+def get_api_key_value(current_user: Annotated[UserSchema, Depends(get_current_active_user)], key_id: str, db: Session = Depends(get_db)):
+    """The API key's value - what goes in the X-Auth-Token header - for the copy button."""
+    with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.GET)):
+        increment_counter(_counter, Method.GET)
+        apiKey = ApiKeys.getUserApiKey(current_user.id, key_id, db)
+        if not apiKey:
+            return JSONResponse(content = {
+                'status': 'ko',
+                'error': 'api key not found',
+                'i18n_code': 'api_key_not_found',
+                'cid': get_current_cid()
+            }, status_code = 404)
+        return JSONResponse(content = {
+            'status': 'ok',
+            'value': apiKey.secret_key
+        }, status_code = 200)
+
 @router.delete("/{key_id}")
 def delete_api_key(current_user: Annotated[UserSchema, Depends(get_current_active_user)], key_id: str, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.DELETE)):
