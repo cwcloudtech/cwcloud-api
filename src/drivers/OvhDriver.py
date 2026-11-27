@@ -6,6 +6,7 @@ import pulumi_ovh as ovh
 from pulumi_openstack import compute
 from openstack import connection
 from pulumi import automation as auto, ResourceOptions
+from utils import pulumi_state
 from pulumi_openstack.compute import _inputs
 
 from drivers.ProviderDriver import ProviderDriver
@@ -53,7 +54,7 @@ class OvhDriver(ProviderDriver):
             pulumi.export("ip_address", new_instance.access_ip_v4)
             pulumi.export("type", new_instance.flavor_name)
 
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
 
@@ -68,7 +69,7 @@ class OvhDriver(ProviderDriver):
             registry = compute.get_flavor(name = hashed_registry_name)
             pulumi.export("type", registry.flavor_name)
 
-        stack = auto.create_or_select_stack(stack_name = hashed_registry_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_registry_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
 
@@ -104,7 +105,7 @@ class OvhDriver(ProviderDriver):
 
             pulumi.export("public_ip", new_instance.access_ip_v4)
 
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
         cloudflare_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
@@ -149,7 +150,7 @@ class OvhDriver(ProviderDriver):
             user = ovh.cloudproject.User(hashed_bucket_name, service_name = service_name, description = hashed_bucket_name, role_name = "objectstore_operator")
             pulumi.export("user_id", user.id)
 
-        stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_bucket_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
         up_res = stack.up()
@@ -173,7 +174,7 @@ class OvhDriver(ProviderDriver):
 
     def delete_bucket(self, bucket, user_email):
         hashed_bucket_name = rehash_dynamic_name(bucket.name, bucket.hash)
-        stack = auto.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
+        stack = pulumi_state.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
         stack.destroy()
         mainRegion = ''.join([i for i in bucket.region if not i.isdigit()])
         delete_ovh_bucket(hashed_bucket_name, mainRegion.upper(), bucket.bucket_user_id)
@@ -187,7 +188,7 @@ class OvhDriver(ProviderDriver):
                     service_name = service_name,
                     region = mainRegion)
                 pulumi.export("endpoint", reg.url)
-        stack = auto.create_or_select_stack(stack_name = hashed_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
         up_res = stack.up()
@@ -210,7 +211,7 @@ class OvhDriver(ProviderDriver):
 
     def delete_registry(self, registry, user_email):
         hashed_name = rehash_dynamic_name(registry.name, registry.hash)
-        stack = auto.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
+        stack = pulumi_state.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
         stack.destroy()
         return
 
@@ -221,7 +222,7 @@ class OvhDriver(ProviderDriver):
         def create_pulumi_program():
             create_custom_dns_record(record_name, dns_zone, record_type, ttl, data)
         
-        stack = auto.create_or_select_stack(stack_name = "ovh-create{}-{}".format(record_name, dns_zone),
+        stack = pulumi_state.create_or_select_stack(stack_name = "ovh-create{}-{}".format(record_name, dns_zone),
                                             project_name = "dns-records",
                                             program = create_pulumi_program)
         stack.up()
@@ -230,7 +231,7 @@ class OvhDriver(ProviderDriver):
     def delete_dns_records(self, id, record_name, root_dns_zone):
         def create_pulumi_program():
             delete_ovh_dns_record(id, root_dns_zone)
-        stack = auto.create_or_select_stack(stack_name = "ovh-delete{}-{}".format(id, record_name),
+        stack = pulumi_state.create_or_select_stack(stack_name = "ovh-delete{}-{}".format(id, record_name),
                                             project_name = "dns-records",
                                             program = create_pulumi_program)
         stack.up()

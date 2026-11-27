@@ -6,6 +6,7 @@ import pulumiverse_scaleway as scaleway
 
 from pulumi import ResourceOptions
 from pulumi import automation as auto
+from utils import pulumi_state
 from urllib.error import HTTPError
 
 from drivers.ProviderDriver import ProviderDriver
@@ -69,7 +70,7 @@ class ScalewayDriver(ProviderDriver):
             pulumi.export("ttl", ttl)
             pulumi.export("data", data)
         
-        stack = auto.create_or_select_stack(stack_name = "scw-create-{}-{}".format(record_name, dns_zone),
+        stack = pulumi_state.create_or_select_stack(stack_name = "scw-create-{}-{}".format(record_name, dns_zone),
                                             project_name = "dns-records",
                                             program = create_pulumi_program)
         stack.up()
@@ -104,7 +105,7 @@ class ScalewayDriver(ProviderDriver):
                     }]
                 }
             requests.patch(f'{SCW_API_URL}/domain/v2beta1/dns-zones/{root_dns_zone}/records', headers={"X-Auth-Token": SCW_SECRET_KEY}, json=data, timeout=HTTP_REQUEST_TIMEOUT)
-        stack = auto.create_or_select_stack(stack_name = "{}-{}".format(id, record_name),
+        stack = pulumi_state.create_or_select_stack(stack_name = "{}-{}".format(id, record_name),
                                             project_name = "dns-records",
                                             program = create_pulumi_program)
         stack.up()
@@ -134,7 +135,7 @@ class ScalewayDriver(ProviderDriver):
 
         cloudflare_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
 
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
         stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
@@ -168,7 +169,7 @@ class ScalewayDriver(ProviderDriver):
             pulumi.export("type", existing_instance.type)
  
 
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
 
@@ -189,7 +190,7 @@ class ScalewayDriver(ProviderDriver):
             pulumi.export("type", existing_registry.type)
 
         try:
-            stack = auto.create_or_select_stack(stack_name = hashed_registry_name,
+            stack = pulumi_state.create_or_select_stack(stack_name = hashed_registry_name,
                                                 project_name = sanitize_project_name(user_email),
                                                 program = create_pulumi_program)
 
@@ -212,7 +213,7 @@ class ScalewayDriver(ProviderDriver):
             pulumi.export("type", existing_bucket.type)
 
         try:
-            stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
+            stack = pulumi_state.create_or_select_stack(stack_name = hashed_bucket_name,
                                                 project_name = sanitize_project_name(user_email),
                                                 program = create_pulumi_program)
 
@@ -274,7 +275,7 @@ class ScalewayDriver(ProviderDriver):
                                                 name = hashed_bucket_name,
                                                 region = region)
             pulumi.export("endpoint", object_storage.endpoint)
-        stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_bucket_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
         stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
@@ -297,7 +298,7 @@ class ScalewayDriver(ProviderDriver):
 
     def delete_bucket(self, bucket, user_email):
         hashed_bucket_name = rehash_dynamic_name(bucket.name, bucket.hash)
-        stack = auto.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
+        stack = pulumi_state.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
         stack.destroy()
 
     def create_registry(self, user_email, hashed_name, region, type):
@@ -307,7 +308,7 @@ class ScalewayDriver(ProviderDriver):
                 isPublic = False
             registry = scaleway.RegistryNamespace(hashed_name, name = hashed_name, region = region, is_public = isPublic)
             pulumi.export("endpoint", registry.endpoint)
-        stack = auto.create_or_select_stack(stack_name = hashed_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
         stack.set_config("scaleway:accessKey", auto.ConfigValue(SCW_ACCESS_KEY))
@@ -330,7 +331,7 @@ class ScalewayDriver(ProviderDriver):
 
     def delete_registry(self, registry, user_email):
         hashed_name = rehash_dynamic_name(registry.name, registry.hash)
-        stack = auto.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_bucket)
+        stack = pulumi_state.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_bucket)
         stack.destroy()
 
     def cloud_init_script(self):

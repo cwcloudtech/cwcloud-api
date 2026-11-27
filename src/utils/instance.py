@@ -4,7 +4,7 @@ import json
 
 from urllib.error import HTTPError
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from pulumi import automation as auto
+from utils import pulumi_state
 from datetime import datetime
 from time import sleep
 from fastapi import BackgroundTasks
@@ -215,7 +215,7 @@ def delete_instance(hash, instanceName, environment, retry = 0):
             log_msg("DEBUG", "[delete_instance] waiting: instanceName = {}, environment = {}, wait = {}".format(instanceName, environment, waiting_time))
             sleep(waiting_time)
 
-        stack = auto.select_stack(rehash_dynamic_name(instanceName, hash), sanitize_project_name(environment), program = delete_instance)
+        stack = pulumi_state.select_stack(rehash_dynamic_name(instanceName, hash), sanitize_project_name(environment), program = delete_instance)
         stack.destroy()
     except Exception as e:
         log_msg("WARN", "[delete_instance] trying again because of this error: instanceName = {}, environment = {}, error = {}".format(instanceName, environment, e))

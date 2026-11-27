@@ -5,6 +5,7 @@ import pulumi
 import pulumi_aws as aws
 
 from pulumi import automation as auto
+from utils import pulumi_state
 from botocore.config import Config
 
 from drivers.ProviderDriver import ProviderDriver
@@ -60,7 +61,7 @@ class AwsDriver(ProviderDriver):
         aws_driver_secret_access_key = get_driver_secret_access_key()
         cloudflare_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
 
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
         stack.set_config("aws:accessKey", auto.ConfigValue(aws_driver_access_key_id))
@@ -130,7 +131,7 @@ class AwsDriver(ProviderDriver):
             aws.s3.Bucket(resource_name = hashed_bucket_name, acl = bucket_type if bucket_type == "private" else None, hosted_zone_id = region, tags = {"Name": hashed_bucket_name})
         aws_driver_access_key_id = get_driver_access_key_id()
         aws_driver_secret_access_key = get_driver_secret_access_key()
-        stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_bucket_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
 
@@ -164,7 +165,7 @@ class AwsDriver(ProviderDriver):
 
     def delete_bucket(self, bucket, user_email):
         hashed_bucket_name = rehash_dynamic_name(bucket.name, bucket.hash)
-        stack = auto.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
+        stack = pulumi_state.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
         stack.destroy()
         delete_aws_user_bucket(bucket.region, bucket.id, hashed_bucket_name)
 
@@ -178,7 +179,7 @@ class AwsDriver(ProviderDriver):
 
         aws_driver_access_key_id = get_driver_access_key_id()
         aws_driver_secret_access_key = get_driver_secret_access_key()
-        stack = auto.create_or_select_stack(stack_name = hashed_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
         stack.set_config("aws:accessKey", auto.ConfigValue(aws_driver_access_key_id))
@@ -206,7 +207,7 @@ class AwsDriver(ProviderDriver):
 
     def delete_registry(self, registry, user_email):
         hashed_name = rehash_dynamic_name(registry.name, registry.hash)
-        stack = auto.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
+        stack = pulumi_state.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
         stack.destroy()
         delete_aws_user_registry(hashed_name, registry.region, registry.id)
 
@@ -238,7 +239,7 @@ class AwsDriver(ProviderDriver):
         aws_driver_secret_access_key = get_driver_secret_access_key()
 
         stack_name = f"{record_name}.{dns_zone}"
-        stack = auto.create_stack(stack_name = stack_name,
+        stack = pulumi_state.create_stack(stack_name = stack_name,
                                 project_name = os.getenv("PULUMI_AWS_PROJECT_NAME"),
                                 program=create_pulumi_program)   
         
@@ -254,7 +255,7 @@ class AwsDriver(ProviderDriver):
     def delete_dns_records(self, record_id, record_name, dns_zone):
         project_name = os.getenv("PULUMI_AWS_PROJECT_NAME")
         stack_name = record_name
-        stack = auto.select_stack(stack_name = stack_name,
+        stack = pulumi_state.select_stack(stack_name = stack_name,
                                 project_name = project_name,
                                 program=self.delete_dns_records)
 

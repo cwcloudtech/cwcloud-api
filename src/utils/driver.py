@@ -3,7 +3,9 @@ import re
 
 from utils.common import is_not_empty, is_true
 
-_sanitize_project_name = os.getenv('PULUMI_SANITIZE_PROJECT_NAME')
+# Pulumi project mode rejects project names outside [a-zA-Z0-9_.-] (e.g. an email
+# used for buckets/registries): sanitized unless PULUMI_SANITIZE_PROJECT_NAME=false.
+_sanitize_project_name = os.getenv('PULUMI_SANITIZE_PROJECT_NAME', 'true')
 _allowed_chars_pattern = re.compile(r'[^a-zA-Z0-9_\-\.]')
 
 def sanitize_project_name(name: str):

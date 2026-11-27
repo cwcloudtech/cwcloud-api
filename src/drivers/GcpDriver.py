@@ -7,6 +7,7 @@ from pulumi_gcp import compute
 import pulumi_gcp as gcp
 
 from pulumi import automation as auto
+from utils import pulumi_state
 from google.cloud import compute_v1
 from google.cloud import dns
 from google.oauth2 import service_account
@@ -86,7 +87,7 @@ class GcpDriver(ProviderDriver):
                 ProviderDriver().create_dns_records(hashed_instance_name, environment, compute_instance.network_interfaces[0].access_configs[0].nat_ip, root_dns_zone)
 
         cloudflare_api_token = os.getenv('CLOUDFLARE_API_TOKEN')
-        stack = auto.create_or_select_stack(stack_name = hashed_instance_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_instance_name,
                                             project_name = sanitize_project_name(environment['path']),
                                             program = create_pulumi_program)
 
@@ -117,7 +118,7 @@ class GcpDriver(ProviderDriver):
             )
             pulumi.export("endpoint", bucket.self_link)
 
-        stack = auto.create_or_select_stack(stack_name = hashed_bucket_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_bucket_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
 
@@ -151,7 +152,7 @@ class GcpDriver(ProviderDriver):
 
             pulumi.export("endpoint", f"{region}-docker.pkg.dev/{_gcp_project_id}/{hashed_name}")
 
-        stack = auto.create_or_select_stack(stack_name = hashed_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = hashed_name,
                                             project_name = sanitize_project_name(user_email),
                                             program = create_pulumi_program)
 
@@ -235,7 +236,7 @@ class GcpDriver(ProviderDriver):
         hashed_bucket_name = rehash_dynamic_name(bucket.name, bucket.hash)
         bucket.force_delete_objects = True
         service_account_email = f"{hashed_bucket_name}-sa@{_gcp_project_id}.iam.gserviceaccount.com"
-        stack = auto.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
+        stack = pulumi_state.select_stack(hashed_bucket_name, sanitize_project_name(user_email), program = self.delete_bucket)
         stack.destroy()
         delete_bucket_service_account(service_account_email)
 
@@ -253,7 +254,7 @@ class GcpDriver(ProviderDriver):
     def delete_registry(self, registry, user_email):
         hashed_name = rehash_dynamic_name(registry.name, registry.hash)
         service_account_email = f"{hashed_name}-sa@{_gcp_project_id}.iam.gserviceaccount.com"
-        stack = auto.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
+        stack = pulumi_state.select_stack(hashed_name, sanitize_project_name(user_email), program = self.delete_registry)
         stack.destroy()
         delete_registry_service_account(service_account_email)
 
@@ -272,7 +273,7 @@ class GcpDriver(ProviderDriver):
 
         # Name the stack by the name of the record (the fully qualified name)
         stack_name = f"{record_name}.{get_provider_dns_zone_domain_name(dns_zone)[:-1]}"
-        stack = auto.create_or_select_stack(stack_name = stack_name,
+        stack = pulumi_state.create_or_select_stack(stack_name = stack_name,
                                         project_name = os.getenv('PULUMI_GCP_PROJECT_NAME'),
                                         program = create_pulumi_program)
         
@@ -287,7 +288,7 @@ class GcpDriver(ProviderDriver):
     def delete_dns_records(self, record_id, record_name, dns_zone):
         project_name = os.getenv('PULUMI_GCP_PROJECT_NAME')
         stack_name = record_name
-        stack = auto.select_stack(stack_name = stack_name,
+        stack = pulumi_state.select_stack(stack_name = stack_name,
                                 project_name = project_name,
                                 program=self.delete_dns_records)
 
