@@ -144,6 +144,12 @@ class Instance(Base):
         db.commit()
 
     @staticmethod
+    def updateType(id, type, db):
+        current_date = datetime.now().isoformat()
+        db.query(Instance).filter(Instance.id == id).update({"modification_date": current_date, "type": type})
+        db.commit()
+
+    @staticmethod
     def updateTypeAndIp(id, type, ip, db):
         current_date = datetime.now().isoformat()
         db.query(Instance).filter(Instance.id == id).update({"modification_date": current_date, "type": type, "ip_address": ip})

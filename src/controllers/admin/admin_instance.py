@@ -682,6 +682,59 @@ def admin_update_instance(current_user, instance_id, payload, db):
         'i18n_code': 'instance_updated'
     }, status_code = 200)
 
+def admin_update_instance_type(current_user, instance_id, payload, db):
+    """Database only: records an offer change already made on the provider's side
+    (e.g. an instance upgraded in the Scaleway console), for display and billing."""
+    if not is_numeric(instance_id):
+        return JSONResponse(content = {
+            'status': 'ko',
+            'error': 'Invalid instance id',
+            'cid': get_current_cid()
+        }, status_code = 400)
+
+    from entities.Instance import Instance
+    userInstance = Instance.findInstanceById(instance_id, db)
+    if not userInstance:
+        return JSONResponse(content = {
+            'status': 'ko',
+            'error': 'Instance not found',
+            'i18n_code': 'instance_not_found',
+            'cid': get_current_cid()
+        }, status_code = 404)
+
+    requested_type = str(payload.type or "").strip()
+    try:
+        available_types = get_provider_available_instances_by_region_zone(userInstance.provider, userInstance.region, userInstance.zone)
+    except HTTPError as e:
+        return JSONResponse(content = {
+            'status': 'ko',
+            'error': e.msg,
+            'i18n_code': e.headers['i18n_code'],
+            'cid': get_current_cid()
+        }, status_code = e.code)
+
+    new_type = next((t for t in available_types if t.lower() == requested_type.lower()), None)
+    if new_type is None:
+        return JSONResponse(content = {
+            'status': 'ko',
+            'error': "Instance type {} isn't available in {} {}-{}; available types: {}".format(requested_type, userInstance.provider, userInstance.region, userInstance.zone, ", ".join(available_types)),
+            'i18n_code': 'instance_type_not_available',
+            'cid': get_current_cid()
+        }, status_code = 400)
+
+    old_type = userInstance.type
+    Instance.updateType(userInstance.id, new_type, db)
+    log_msg("INFO", "[admin_update_instance_type] instance #{} ({}) type {} -> {} by {}".format(userInstance.id, userInstance.name, old_type, new_type, current_user.email))
+    return JSONResponse(content = {
+        'status': 'ok',
+        'message': 'instance type successfully updated',
+        'i18n_code': 'instance_type_updated',
+        'id': userInstance.id,
+        'name': userInstance.name,
+        'old_type': old_type,
+        'type': new_type
+    }, status_code = 200)
+
 def admin_get_instances(current_user, provider, region, db):
     from entities.Instance import Instance
     userRegionInstances = Instance.getAllInstancesByRegion(provider, region, db)

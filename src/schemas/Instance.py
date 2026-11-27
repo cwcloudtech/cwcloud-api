@@ -12,6 +12,9 @@ class InstanceUpdateSchema(BaseModel):
     status: Optional[str] = None
     is_protected: Optional[bool] = None
 
+class InstanceTypeUpdateSchema(BaseModel):
+    type: str
+
 class InstanceAttachSchema(BaseModel):
     name: str = "Instance Name"
     type: str = get_provider_infos(DEFAULT_PROVIDER, 'instance_types')[0]

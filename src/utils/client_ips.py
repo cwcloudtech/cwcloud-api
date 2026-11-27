@@ -4,3 +4,4 @@ def get_client_ips(request):
         request.headers.get("X-Forwarded-For", None), 
         request.headers.get("X-Real-IP", None)
     ]
+

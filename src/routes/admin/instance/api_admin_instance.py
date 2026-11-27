@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 from schemas.User import UserSchema
 from database.postgres_db import get_db
-from schemas.Instance import InstanceProvisionSchema, InstanceAttachSchema, InstanceUpdateSchema
+from schemas.Instance import InstanceProvisionSchema, InstanceAttachSchema, InstanceUpdateSchema, InstanceTypeUpdateSchema
 from middleware.auth_guard import admin_required
-from controllers.admin.admin_instance import admin_add_instance, admin_get_instance, admin_get_instances, admin_get_user_instances, admin_remove_instance, admin_update_instance, admin_refresh_instance, admin_attach_instance
+from controllers.admin.admin_instance import admin_add_instance, admin_get_instance, admin_get_instances, admin_get_user_instances, admin_remove_instance, admin_update_instance, admin_update_instance_type, admin_refresh_instance, admin_attach_instance
 
 from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
@@ -53,6 +53,12 @@ def update_instance_by_id(current_user: Annotated[UserSchema, Depends(admin_requ
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.PATCH)):
         increment_counter(_counter, Method.PATCH)
         return admin_update_instance(current_user, instance_id, payload, db)
+
+@router.patch("/{instance_id}/type")
+def update_instance_type_by_id(current_user: Annotated[UserSchema, Depends(admin_required)], instance_id: str, payload: InstanceTypeUpdateSchema, db: Session = Depends(get_db)):
+    with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.PATCH)):
+        increment_counter(_counter, Method.PATCH)
+        return admin_update_instance_type(current_user, instance_id, payload, db)
 
 @router.get("/{provider}/{region}/all")
 def get_all_instances(current_user: Annotated[UserSchema, Depends(admin_required)], provider: str, region: str, db: Session = Depends(get_db)):

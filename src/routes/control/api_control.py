@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from database.postgres_db import get_db
 from schemas.Control import ControlDeleteInstanceSchema, ControlUpdateInstanceSchema
 
+from middleware.auth_guard import get_current_not_mandatory_user
 from utils.client_ips import get_client_ips
-from utils.common import is_not_empty
+from utils.common import is_not_empty, is_true
 from utils.gitlab import delete_runner, get_project_runners
 from utils.dynamic_name import rehash_dynamic_name
 from utils.instance import delete_instance, update_instance_status, get_virtual_machine
@@ -88,7 +89,7 @@ def handle_instance_error_creation(request: Request, bt: BackgroundTasks, instan
             }, status_code = e.code)
 
 @router.patch("/instance/{instance_id}")
-def update_instance(request: Request, instance_id: str, payload: ControlUpdateInstanceSchema, db: Session = Depends(get_db)):
+def update_instance(request: Request, instance_id: str, payload: ControlUpdateInstanceSchema, db: Session = Depends(get_db), current_user = Depends(get_current_not_mandatory_user)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.PATCH)):
         increment_counter(_counter, Method.PATCH)
         action = payload.status
@@ -103,7 +104,11 @@ def update_instance(request: Request, instance_id: str, payload: ControlUpdateIn
 
         client_ips = get_client_ips(request)
         instance_ip = userInstance.ip_address
-        if not any(is_not_empty(ip) and ip == instance_ip for ip in client_ips):
+        # The instance itself (cloud-init) is recognized by its IP; any other caller (e.g. the
+        # AI assistant) must authenticate (JWT or API key) as the instance owner or an admin.
+        authorized_user = current_user is not None and \
+            (current_user.id == userInstance.user_id or is_true(current_user.is_admin))
+        if not authorized_user and not any(is_not_empty(ip) and ip == instance_ip for ip in client_ips):
             log_msg("ERROR", "[api_control] patch instance 403: not the expected instance_ip = {} not in client_ips = {}".format(instance_ip, client_ips))
             return JSONResponse(content = {
                 'status': 'ko',
