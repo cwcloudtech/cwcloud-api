@@ -21,6 +21,14 @@ class ApiKeys(Base):
         return apiKeys
 
     @staticmethod
+    def getAllApiKeys(db):
+        return db.query(ApiKeys).order_by(ApiKeys.id.desc()).all()
+
+    @staticmethod
+    def getApiKeyById(key_id, db):
+        return db.query(ApiKeys).filter(ApiKeys.id == key_id).first()
+
+    @staticmethod
     def getApiKeysByAccessKey(access_key, db):
         apiKeys = db.query(ApiKeys).filter(ApiKeys.access_key == access_key).all()
         return apiKeys

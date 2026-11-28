@@ -1,4 +1,3 @@
-import json
 
 from typing import Annotated
 from sqlalchemy.orm import Session
@@ -10,10 +9,9 @@ from middleware.auth_guard import get_current_active_user
 from schemas.User import UserSchema
 from schemas.API_keys import ApiKeysSchema, ApiKeysVerificationSchema
 from entities.Apikeys import ApiKeys
+from controllers.api_keys import create_api_key_for_user
 
-from utils.api_keys import generate_apikey_access_key, generate_apikey_secret_key
 from utils.common import is_empty
-from utils.encoder import AlchemyEncoder
 from utils.observability.cid import get_current_cid
 from utils.observability.otel import get_otel_tracer
 from utils.observability.traces import span_format
@@ -29,37 +27,7 @@ _counter = create_counter("keys_api", "Keys API counter")
 def create_api_key(current_user: Annotated[UserSchema, Depends(get_current_active_user)], payload: ApiKeysSchema, db: Session = Depends(get_db)):
     with get_otel_tracer().start_as_current_span(span_format(_span_prefix, Method.POST)):
         increment_counter(_counter, Method.POST)
-        if is_empty(payload.name):
-            return JSONResponse(content = {
-                'status': 'ko',
-                'error': 'please provide a name for the api key',
-                'i18n_code': 'invalid_api_key',
-                'cid': get_current_cid()
-            }, status_code = 400)
-
-        #? Generate unique access key
-        while True:
-            access_key = generate_apikey_access_key()
-            existing_keys = ApiKeys.getApiKeysByAccessKey(access_key, db)
-            if not existing_keys:
-                break
-
-        #? Generate unique secret key
-        while True:
-            secret_key = generate_apikey_secret_key()
-            existing_keys = ApiKeys.getApiKeysBySecretKey(secret_key, db)
-            if not existing_keys:
-                break
-
-        api_key = ApiKeys(**payload.dict())
-        api_key.access_key = access_key
-        api_key.secret_key = secret_key
-        api_key.user_id = current_user.id
-        api_key.save(db)
-
-        api_key_json = json.loads(json.dumps(api_key, cls = AlchemyEncoder))
-        api_key_json["id"] = api_key.id
-        return JSONResponse(content = api_key_json, status_code = 201)
+        return create_api_key_for_user(current_user.id, payload, db)
 
 @router.get("")
 def get_api_keys(current_user: Annotated[UserSchema, Depends(get_current_active_user)], db: Session = Depends(get_db)):

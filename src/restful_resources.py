@@ -37,6 +37,7 @@ def import_resources(app):
     from routes.admin.instance import api_admin_instance
     from routes.admin.mfa import api_admin_mfa
     from routes.admin.project import api_admin_project
+    from routes.admin.api_keys import api_admin_api_keys
     from routes.admin.registry import api_admin_registry
     from routes.admin.support import api_admin_support
     from routes.admin.kubernetes import api_admin_object, api_admin_cluster
@@ -107,6 +108,7 @@ def import_resources(app):
     app.include_router(api_admin_mfa.router, tags = ['Admin Multi-Factor Authentication'], prefix = f'/{version}/admin/mfa')
     app.include_router(api_admin_environment.router, tags = ['Admin Environment'], prefix = f'/{version}/admin/environment')
     app.include_router(api_admin_project.router, tags = ['Admin Project'], prefix = f'/{version}/admin/project')
+    app.include_router(api_admin_api_keys.router, tags = ['Admin API Keys'], prefix = f'/{version}/admin/api_keys')
     app.include_router(api_admin_instance.router, tags = ['Admin Instance'], prefix = f'/{version}/admin/instance')
     app.include_router(api_admin_bucket.router, tags = ['Admin Bucket'], prefix = f'/{version}/admin/bucket')
     app.include_router(api_admin_registry.router, tags = ['Admin Registry'], prefix = f'/{version}/admin/registry')
